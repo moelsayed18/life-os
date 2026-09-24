@@ -593,6 +593,78 @@ function importAthleticPlan(s){
     })});
   });
 }
+var ATHLETIC_V2=2;
+var IMPORT_EX_V2=[
+  ['Explosive Push-up','chest','bw',0],['Nordic Hamstring Curl','legs','bw',0],['Copenhagen Plank','core','time',0],
+  ['Dumbbell Bench Press','chest','lift',2],['Athletic Flow','core','bw',0]
+];
+var IMPORT_PLANS_V2=[
+ ['Day 1 \u2013 Upper Strength + Power','Day 1 \u2013 Upper (Strength + Power)',[
+  ['Explosive Push-up',3,'3-5','Max explosive effort \u00B7 Rest 90s'],
+  ['Barbell Bench Press',4,'4-6','Tempo 2-0-X-1 \u00B7 Rest 2.5-3min \u00B7 RIR 2-3 \u00B7 paired with the push-up above'],
+  ['Pull-Up',4,'6-8','Tempo 2-1-X-1 \u00B7 Rest 2min \u00B7 RIR 2, or Lat Pulldown'],
+  ['Incline Dumbbell Press',3,'8-10','Rest 90s \u00B7 RIR 2'],
+  ['Chest-Supported DB Row',3,'8-10','Rest 90s \u00B7 RIR 2'],
+  ['Lateral Raise',3,'12-15','RIR 1-2 \u00B7 important for upper-body shape'],
+  ['Face Pull',2,'12-15',''],
+  ['Farmer Carry',3,'30-40m',''],
+  ['Pallof Press',3,'10/side','']
+ ]],
+ ['Day 2 \u2013 Speed + Agility','Day 2 \u2013 Speed + Agility',[
+  ['Acceleration Sprint',4,'10m','Rest 2-3min \u00B7 then 3\u00d720m \u2013 quality over quantity'],
+  ['Sprint',3,'20m','Rest 2-3min'],
+  ['Deceleration Drill',3,'2','Sprint \u2192 controlled stop'],
+  ['5-10-5 Shuttle',3,'attempts','Rest 2-3min'],
+  ['Lateral Shuffle',3,'10-15s',''],
+  ['Reaction Drill',4,'10-15s','With a partner or a random cue'],
+  ['Agility Ladder',2,'2 rounds','Optional \u2013 2-3 patterns, skip if short on time or energy']
+ ]],
+ ['Day 3 \u2013 Lower Strength + Power','Day 3 \u2013 Lower (Strength + Power, Injury Resilience)',[
+  ['Vertical Jump',3,'3','Countermovement jump \u00B7 Rest 90-120s'],
+  ['Broad Jump',2,'3',''],
+  ['Back Squat',4,'4-6','Tempo 3-1-X-1 \u00B7 Rest 3min \u00B7 RIR 2-3'],
+  ['Romanian Deadlift',3,'6-8','Tempo 3-1-X-1 \u00B7 Rest 2-3min \u00B7 RIR 2'],
+  ['Bulgarian Split Squat',3,'6-8/leg','Rest 90-120s \u00B7 RIR 2'],
+  ['Nordic Hamstring Curl',2,'4-6','If you can anchor your feet, or Sliding/Machine Leg Curl 3\u00d78-12'],
+  ['Calf Raise',3,'10-15',''],
+  ['Tibialis Raise',2,'15-20','Or lean your back on a wall and lift your toes'],
+  ['Copenhagen Plank',2,'20-30s/side','Adductors \u2013 important for change of direction']
+ ]],
+ ['Day 4 \u2013 Athletic Conditioning','Day 4 \u2013 Aerobic + Recovery',[
+  ['Walking',1,'25-35 min','Zone 2 \u00B7 walking, jogging, cycling or elliptical \u00B7 comfortable-to-moderate effort'],
+  ['Mobility',1,'10-15 min','Ankles, hips, adductors, T-spine \u2013 use the Mobility routine under Stretch']
+ ]],
+ ['Day 5 \u2013 Full Body Functional Strength','Day 5 \u2013 Full Body Athletic',[
+  ['Broad Jump',3,'2-3','Or Box Jump'],
+  ['Trap Bar Deadlift',3,'4-6','Rest 3min \u00B7 RIR 2, or conventional deadlift'],
+  ['Dumbbell Bench Press',3,'6-10','RIR 2'],
+  ['Seated Cable Row',3,'8-10','RIR 2'],
+  ['Walking Lunge',3,'8/leg',''],
+  ['Single-leg RDL',2,'8/leg','RIR 2'],
+  ['Landmine Press',3,'8/side','Or single-arm cable/dumbbell press'],
+  ['Calf Raise',3,'12-15',''],
+  ['Suitcase Carry',3,'20-30m/side',''],
+  ['Side Plank',2,'30-45s/side','']
+ ]],
+ [null,'Day 6 \u2013 Optional (Recovery or Flow)',[
+  ['Athletic Flow',1,'20-30 min','If recovery is good: bodyweight squat, reverse lunge, push-up, crawl, balance, light lateral movement, light skipping, easy cardio'],
+  ['Mobility',1,'20 min','If tired: mobility and recovery only instead of the flow above'],
+ ]]
+];
+function migrateAthleticPlanV2(s){
+  if((s.athleticV||0)>=ATHLETIC_V2)return;
+  s.athleticV=ATHLETIC_V2;
+  var idBy={};s.exercises.forEach(function(e){idBy[e.n]=e.id;});
+  function ensureEx(n,g,t,inc){if(idBy[n])return idBy[n];var id=nid(s,'e');idBy[n]=id;s.exercises.push({id:id,n:n,g:g,t:t,inc:inc});return id;}
+  IMPORT_EX_V2.forEach(function(e){ensureEx(e[0],e[1],e[2],e[3]);});
+  IMPORT_PLANS_V2.forEach(function(p){
+    var oldName=p[0],newName=p[1],items=p[2].map(function(it){return {e:ensureEx(it[0],'core','bw',0),sets:it[1],reps:it[2],note:it[3]||''};});
+    var pl=oldName?s.plans.find(function(x){return x.n===oldName;}):null;
+    if(!pl)pl=s.plans.find(function(x){return x.n===newName;});
+    if(pl){pl.n=newName;pl.items=items;}
+    else s.plans.push({id:nid(s,'p'),n:newName,items:items});
+  });
+}
 
 /* ---- stretching routines (starter content, general guidance) ---- */
 var STRETCH=[
@@ -696,7 +768,7 @@ var STANDALONE=true;
 var LS_KEY='lifeos.v1',UI_KEY='lifeos.ui';
 var storageOK=true;
 try{localStorage.setItem('__t','1');localStorage.removeItem('__t');}catch(e){storageOK=false;}
-var DOCS={core:['v','habits','nextId','log','goals','targets','settings','seq','body','focus','stretchLog','periodDone','importedAthleticPlan'],journal:['notes','reviews','qnotes'],train:['exercises','plans','workouts','program'],money:['money']};
+var DOCS={core:['v','habits','nextId','log','goals','targets','settings','seq','body','focus','stretchLog','periodDone','importedAthleticPlan','athleticV'],journal:['notes','reviews','qnotes'],train:['exercises','plans','workouts','program'],money:['money']};
 
 function nid(s,p){s.seq=(s.seq||1)+1;return p+s.seq;}
 function seedTraining(s){
@@ -740,6 +812,7 @@ function normalize(s){
   s.ts=s.ts||{core:s.updated||0,journal:0,train:0};
   if(!Array.isArray(s.exercises)||!s.exercises.length||!Array.isArray(s.plans)){seedTraining(s);}
   importAthleticPlan(s);
+  migrateAthleticPlanV2(s);
   s.v=3;
   return s;
 }
@@ -1722,7 +1795,12 @@ function trainLog(){
   var groupsHit={};(sess.x||[]).forEach(function(x){var ex=exById(x.e);if(ex&&x.s.some(function(s){return s[3]===1;}))groupsHit[ex.g]=1;});
   out+='<div class="sumrow"><div><b>'+esc(sess.n)+'</b><span>Session</span></div><div><b>'+sets+'</b><span>Sets done</span></div><div><b>'+vol.toLocaleString('en-US')+' kg</b><span>Volume</span></div><div><b>'+Object.keys(groupsHit).map(function(g){return GRP[g]?GRP[g][1]:g;}).join(', ')+(Object.keys(groupsHit).length?'':'\u2014')+'</b><span>Muscle groups</span></div></div>'+
     cards+
-    '<div class="panel"><h3>Add exercise</h3><div class="addf" style="grid-template-columns:1fr auto"><select class="inp" id="wAddEx" aria-label="Exercise">'+groupOptions('')+'</select><button class="btn pri" data-act="wadd">Add</button></div></div>'+
+    '<div class="panel"><h3>Add exercise</h3><div class="addf" style="grid-template-columns:1fr auto"><select class="inp" id="wAddEx" aria-label="Exercise">'+groupOptions('')+'</select><button class="btn pri" data-act="wadd">Add</button></div>'+
+    '<p class="hint" style="margin-top:8px">Can\u2019t find it in the list?</p>'+
+    '<div class="addf" style="grid-template-columns:1fr 120px 120px auto;margin-top:4px"><input class="inp" id="wNewEx" placeholder="New exercise name" aria-label="New exercise name">'+
+    '<select class="inp" id="wNewExG" aria-label="Muscle group">'+GROUPS.map(function(x){return '<option value="'+x[0]+'">'+esc(x[1])+'</option>';}).join('')+'</select>'+
+    '<select class="inp" id="wNewExT" aria-label="Type"><option value="lift">Weights</option><option value="bw" selected>Bodyweight</option><option value="time">Timed</option><option value="cardio">Cardio</option></select>'+
+    '<button class="btn" data-act="wnewadd">Add &amp; log</button></div></div>'+
     '<label class="lbl"><span>Session notes</span><textarea class="inp" data-wnote="1" placeholder="How did it feel? Pain, energy, form cues.">'+esc(sess.nt||'')+'</textarea></label>'+
     '<div class="btns"><button class="btn dng" data-act="wdel">Delete workout</button></div>';
   return out;
@@ -2346,6 +2424,7 @@ document.addEventListener('click',function(e){
     case 'wsetrm':{s=getSess();x=s.x[+el.dataset.x];x.s.splice(+el.dataset.s,1);touch('train');render();break;}
     case 'wexrm':{s=getSess();s.x.splice(+el.dataset.x,1);touch('train');render();break;}
     case 'wadd':{s=getSess();var id=$('#wAddEx').value,exx=exById(id);if(s&&exx){var sg=suggestFor(exx,[8,12],ui.date),sets=[],cnt=exx.t==='cardio'?1:3;for(var i=0;i<cnt;i++)sets.push([sg.w,sg.r,'',0]);s.x.push({e:id,s:sets});touch('train');render();}break;}
+    case 'wnewadd':{s=getSess();var nmW=($('#wNewEx').value||'').trim();if(!nmW||!s)break;var idW=nid(state,'e'),tW=$('#wNewExT').value;state.exercises.push({id:idW,n:nmW,g:$('#wNewExG').value,t:tW,inc:tW==='lift'?2.5:0});var sgW=suggestFor(exById(idW),[8,12],ui.date),setsW=[],cntW=tW==='cardio'?1:3;for(var iW=0;iW<cntW;iW++)setsW.push([sgW.w,sgW.r,'',0]);s.x.push({e:idW,s:setsW});touch('train','core');render();break;}
     case 'wdel':undoable('Workout deleted',['workouts'],['train'],function(){delete state.workouts[ui.date];});break;
     /* plans */
     case 'plnew':{var pid=nid(state,'p');state.plans.push({id:pid,n:'New plan',items:[]});ui.train.plan=pid;touch('train','core');render();break;}
