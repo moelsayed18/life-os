@@ -1,6 +1,6 @@
 /* Life OS service worker: opens instantly and works offline.
    Bump CACHE when you publish a new version so old files are dropped. */
-const CACHE = 'lifeos-v4-2';
+const CACHE = 'lifeos-v5-0';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 const FONTS = ['https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Instrument+Sans:wght@400;500;600&display=swap'];
 
@@ -28,10 +28,11 @@ self.addEventListener('fetch', (e) => {
   e.respondWith(
     caches.open(CACHE).then(async (cache) => {
       const nav = req.mode === 'navigate';
-      const cached = (await cache.match(req, { ignoreSearch: nav })) || (nav ? await cache.match('./index.html') : undefined);
+      const key = nav ? './index.html' : req; // one cached copy for every ?go= link
+      const cached = await cache.match(key);
       const fresh = fetch(req)
-        .then((res) => { if (res && (res.ok || res.type === 'opaque')) cache.put(req, res.clone()); return res; })
-        .catch(() => cached);
+        .then((res) => { if (res && (res.ok || res.type === 'opaque')) cache.put(key, res.clone()); return res; })
+        .catch(() => cached || Response.error());
       return cached || fresh;
     })
   );
@@ -105,6 +106,6 @@ self.addEventListener('notificationclick', (e) => {
   e.waitUntil((async () => {
     const all = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     for (const c of all) { if ('focus' in c) return c.focus(); }
-    if (self.clients.openWindow) return self.clients.openWindow('./');
+    if (self.clients.openWindow) return self.clients.openWindow('./?go=today');
   })());
 });
