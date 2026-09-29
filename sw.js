@@ -1,13 +1,13 @@
 /* Life OS service worker: opens instantly and works offline.
    Bump CACHE when you publish a new version so old files are dropped. */
-const CACHE = 'lifeos-v5-0';
+const CACHE = 'lifeos-v5-2';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 const FONTS = ['https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Instrument+Sans:wght@400;500;600&display=swap'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE)
-      .then((c) => c.addAll(CORE).then(() => Promise.all(FONTS.map((f) => c.add(f).catch(() => {})))))
+      .then((c) => Promise.allSettled(CORE.map((u) => c.add(u))).then(() => Promise.all(FONTS.map((f) => c.add(f).catch(() => {})))))
       .then(() => self.skipWaiting())
   );
 });
@@ -18,6 +18,12 @@ self.addEventListener('activate', (e) => {
       .then(() => self.clients.claim())
   );
 });
+async function tellIfChanged(oldRes, newRes) {
+  try {
+    const [a, b] = await Promise.all([oldRes.clone().text(), newRes.text()]);
+    if (a !== b) (await self.clients.matchAll()).forEach((c) => c.postMessage('update-ready'));
+  } catch (e) {}
+}
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
@@ -31,7 +37,7 @@ self.addEventListener('fetch', (e) => {
       const key = nav ? './index.html' : req; // one cached copy for every ?go= link
       const cached = await cache.match(key);
       const fresh = fetch(req)
-        .then((res) => { if (res && (res.ok || res.type === 'opaque')) cache.put(key, res.clone()); return res; })
+        .then((res) => { if (res && (res.ok || res.type === 'opaque')) { if (nav && cached && res.ok) tellIfChanged(cached, res.clone()); cache.put(key, res.clone()); } return res; })
         .catch(() => cached || Response.error());
       return cached || fresh;
     })
@@ -105,7 +111,7 @@ self.addEventListener('notificationclick', (e) => {
   e.notification.close();
   e.waitUntil((async () => {
     const all = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    for (const c of all) { if ('focus' in c) return c.focus(); }
+    for (const c of all) { if ('focus' in c) { try { if (c.navigate) await c.navigate('./?go=today'); } catch (x) {} return c.focus(); } }
     if (self.clients.openWindow) return self.clients.openWindow('./?go=today');
   })());
 });
