@@ -7,7 +7,7 @@ const FONTS = ['https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wgh
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE)
-      .then((c) => Promise.allSettled(CORE.map((u) => c.add(u))).then(() => Promise.all(FONTS.map((f) => c.add(f).catch(() => {})))))
+      .then((c) => Promise.allSettled(CORE.map((u) => c.add(new Request(u, { cache: 'reload' })))).then(() => Promise.all(FONTS.map((f) => c.add(f).catch(() => {})))))
       .then(() => self.skipWaiting())
   );
 });
@@ -18,12 +18,7 @@ self.addEventListener('activate', (e) => {
       .then(() => self.clients.claim())
   );
 });
-async function tellIfChanged(oldRes, newRes) {
-  try {
-    const [a, b] = await Promise.all([oldRes.clone().text(), newRes.text()]);
-    if (a !== b) (await self.clients.matchAll()).forEach((c) => c.postMessage('update-ready'));
-  } catch (e) {}
-}
+const NET_MS = 3000; // wait this long for the network before falling back to the cached copy
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
@@ -35,17 +30,25 @@ self.addEventListener('fetch', (e) => {
   if (url.hostname === 'api.github.com') return; // never cache sync traffic
   const ok = url.origin === self.location.origin || url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com';
   if (!ok) return;
-  e.respondWith(
-    caches.open(CACHE).then(async (cache) => {
-      const nav = req.mode === 'navigate';
-      const key = nav ? './index.html' : req; // one cached copy for every ?go= link
-      const cached = await cache.match(key);
-      const fresh = fetch(req)
-        .then((res) => { if (res && (res.ok || res.type === 'opaque')) { if (nav && cached && res.ok) tellIfChanged(cached, res.clone()); cache.put(key, res.clone()); } return res; })
-        .catch(() => cached || Response.error());
-      return cached || fresh;
-    })
-  );
+  const nav = req.mode === 'navigate';
+  const key = nav ? './index.html' : req; // one cached copy for every ?go= link
+  // Start the network request right away and keep the worker alive until it finishes, so the cache is
+  // refreshed even when the page was answered from the cache (phones kill idle workers very quickly).
+  const net = fetch(nav ? new Request(req.url, { cache: 'no-cache' }) : req).then((res) => {
+    if (res && (res.ok || res.type === 'opaque')) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(key, copy)).catch(() => {}); }
+    return res;
+  });
+  e.waitUntil(net.then(() => {}, () => {}));
+  e.respondWith((async () => {
+    const cache = await caches.open(CACHE);
+    const cached = await cache.match(key);
+    if (nav) { // newest app when online, instant cached app when offline or slow
+      const first = await Promise.race([net.catch(() => null), new Promise((r) => setTimeout(() => r(null), NET_MS))]);
+      if (first && first.ok) return first;
+      return cached || (await net.catch(() => null)) || Response.error();
+    }
+    return cached || net.catch(() => Response.error());
+  })());
 });
 
 /* ---- daily reminder, best-effort even when the app isn't open ----

@@ -2464,6 +2464,27 @@ function doImport(){
   }catch(e){ui.confirm='';ui.msg='That text is not a valid backup.';}
   render();
 }
+var updPending=false,updSig='',lastUpdChk=0;
+function showUpdate(){
+  if(updPending)return;updPending=true;
+  var b=document.createElement('div');b.id='updbar';b.setAttribute('role','status');
+  b.style.cssText='position:fixed;inset-inline:12px;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:97;display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:14px;background:var(--accent);color:var(--on);box-shadow:0 6px 20px rgba(0,0,0,.3)';
+  b.innerHTML='<span>A new version is ready.</span><button class="btn sm2" id="updgo">Reload</button>';
+  document.body.appendChild(b);$('#updgo').onclick=function(){try{persistLocal();}catch(e){}location.reload();};
+}
+function checkUpdate(force){
+  var now=Date.now();if(!force&&now-lastUpdChk<300000)return;lastUpdChk=now;
+  try{
+    if(navigator.serviceWorker)navigator.serviceWorker.getRegistration().then(function(r){if(r)r.update();}).catch(function(){});
+    fetch('./index.html',{method:'HEAD',cache:'no-cache'}).then(function(r){var g=(r.headers.get('etag')||r.headers.get('last-modified')||'')+'|'+(r.headers.get('content-length')||'');if(!updSig)updSig=g;else if(g!==updSig)showUpdate();}).catch(function(){});
+  }catch(e){}
+}
+/* PIN: only ask again after a quiet period (default 15 minutes), and unlock as soon as the PIN is right */
+function lockGrace(){var v=parseInt(localStorage.getItem('lifeos.lockgrace'),10);return v>=0?v:15;}
+function touchActive(){try{localStorage.setItem('lifeos.lastActive',String(Date.now()));}catch(e){}}
+function lockDue(){var last=+localStorage.getItem('lifeos.lastActive')||0;return !last||Date.now()-last>lockGrace()*60000;}
+setInterval(function(){if(!document.hidden&&!lockEl)touchActive();},60000);
+window.addEventListener('pagehide',touchActive);
 var lockEl=null,hiddenAt=0;
 function lockCfg(){try{return JSON.parse(localStorage.getItem('lifeos.lock')||'null');}catch(e){return null;}}
 async function pinHash(pin,salt){var b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(salt+':'+pin));return Array.prototype.map.call(new Uint8Array(b),function(x){return pad(x.toString(16));}).join('');}
@@ -2472,11 +2493,11 @@ function showLock(){
   lockEl=document.createElement('div');
   lockEl.style.cssText='position:fixed;inset:0;z-index:99;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px';
   lockEl.innerHTML='<h2>Life OS</h2><input class="inp" id="lockPin" type="password" inputmode="numeric" autocomplete="off" placeholder="PIN" style="max-width:220px;text-align:center" aria-label="PIN"><button class="btn pri" data-act="unlock">Unlock</button><p class="hint" id="lockMsg"></p>';
-  document.body.appendChild(lockEl);var i=$('#lockPin');if(i)i.focus();
+  document.body.appendChild(lockEl);var i=$('#lockPin');if(i){i.focus();i.addEventListener('input',async function(){var c=lockCfg();if(c&&i.value.length>=4&&await pinHash(i.value,c.salt)===c.hash&&lockEl){lockEl.remove();lockEl=null;touchActive();}});}
 }
 async function tryUnlock(){
   var c=lockCfg(),i=$('#lockPin');if(!c||!i){return;}
-  if(await pinHash(i.value,c.salt)===c.hash){lockEl.remove();lockEl=null;}else{$('#lockMsg').textContent='Wrong PIN.';i.value='';}
+  if(await pinHash(i.value,c.salt)===c.hash){lockEl.remove();lockEl=null;touchActive();}else{$('#lockMsg').textContent='Wrong PIN.';i.value='';}
 }
 async function setLock(){
   var pin=$('#pinNew').value;if(!/^\d{4,8}$/.test(pin)){ui.msg='The PIN must be 4 to 8 digits.';render();return;}
@@ -2775,8 +2796,10 @@ function checkRollover(){
 }
 setInterval(checkRollover,60000);
 document.addEventListener('visibilitychange',function(){
-  if(document.hidden){hiddenAt=Date.now();clearTimeout(saveT);persistLocal();return;}
-  if(lockCfg()&&hiddenAt&&Date.now()-hiddenAt>60000)showLock();
+  if(document.hidden){hiddenAt=Date.now();touchActive();clearTimeout(saveT);persistLocal();return;}
+  if(lockCfg()&&hiddenAt&&Date.now()-hiddenAt>lockGrace()*60000)showLock();
+  checkUpdate(false);
+  if(updPending&&!isTyping()&&!pomo.running&&!run&&!rest)location.reload();
   checkRollover();
   if(ticker)tick();
   wakeCheck();
@@ -2794,9 +2817,10 @@ function doInstall(){
 if(STANDALONE){
   var hadController=!!(navigator.serviceWorker&&navigator.serviceWorker.controller);
   if('serviceWorker' in navigator){
-    window.addEventListener('load',function(){navigator.serviceWorker.register('./sw.js').catch(function(){});});
-    navigator.serviceWorker.addEventListener('message',function(e){if(e.data==='update-ready')toast('A newer version is ready. Reload to use it.');});
-    navigator.serviceWorker.addEventListener('controllerchange',function(){if(hadController)toast('A new version was installed. Reload to use it.');hadController=true;});
+    window.addEventListener('load',function(){navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).catch(function(){});});
+    navigator.serviceWorker.addEventListener('message',function(e){if(e.data==='update-ready')showUpdate();});
+    navigator.serviceWorker.addEventListener('controllerchange',function(){if(hadController)showUpdate();hadController=true;});
+    setTimeout(function(){checkUpdate(true);},3000);
   }
   window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();ui.installEv=e;if(ui.tab==='settings'&&ui.set==='data')safeRender();});
   window.addEventListener('appinstalled',function(){ui.installEv=null;});
@@ -2810,6 +2834,8 @@ function qcCmds(){
   c.push({l:'Set prayer location (latitude, longitude)',f:function(){var v=prompt('Latitude, longitude (for example 30.04, 31.24)',(state.settings.loc||[]).join(', '));if(v===null)return;var p=v.split(',').map(parseFloat);if(p.length===2&&isFinite(p[0])&&isFinite(p[1])&&Math.abs(p[0])<=66&&Math.abs(p[1])<=180){state.settings.loc=p;touch('core');toast('Location saved');render();}else toast('Could not read that location');}});
   c.push({l:'Set shift cycle start (first morning day of a 4-day block)',f:function(){var v=prompt('Date of the first day of a 4-morning block (YYYY-MM-DD)',state.settings.cycle||todayStr());if(v===null)return;v=v.trim();if(/^\d{4}-\d\d-\d\d$/.test(v)&&!isNaN(parseD(v))){state.settings.cycle=v;touch('core');toast('Shift cycle saved');render();}else toast('Use the format YYYY-MM-DD');}});
   c.push({l:'Clear shift cycle',f:function(){state.settings.cycle='';touch('core');toast('Shift cycle cleared');render();}});
+  c.push({l:'Set PIN auto-lock delay (minutes)',f:function(){var v=parseInt(prompt('Ask for the PIN again after this many minutes away (0 = every time, now '+lockGrace()+')',lockGrace()),10);if(v>=0&&v<=1440){try{localStorage.setItem('lifeos.lockgrace',String(v));}catch(e){}toast('PIN will be asked after '+v+' min away');}}});
+  c.push({l:'Check for a new version now',f:function(){checkUpdate(true);toast('Checking for a new version');}});
   c.push({l:'Show prayer times',f:function(){var t=prayerNow();toast(t?'Fajr '+hm(t.fajr)+'  Sunrise '+hm(t.sunrise)+'  Dhuhr '+hm(t.dhuhr)+'  Asr '+hm(t.asr)+'  Maghrib '+hm(t.maghrib)+'  Isha '+hm(t.isha):'Set your prayer location first');}});
   c.push({l:'Set alert volume (1 to 10)',f:function(){var v=parseInt(prompt('Alert volume from 1 (quiet) to 10 (loud)',Math.round((state.settings.vol||0.08)/0.03)),10);if(v>=1&&v<=10){state.settings.vol=v*0.03;touch('core');beep(880,0.2);}}});
   c.push({l:'Export backup',f:function(){doExport();}});
@@ -2858,7 +2884,7 @@ var qf=$('#qcFab');if(qf)qf.addEventListener('click',function(){qcOpen(false);})
 applyRec();applyComeback();
 try{if(state.settings.notify&&('Notification' in window)&&Notification.permission!=='granted')setTimeout(function(){toast('Notifications are blocked in this browser. Reminders will show inside the app.');},1500);}catch(e){}
 try{var gq=new URLSearchParams(location.search).get('go');if(gq&&VIEWS[gq])ui.tab=gq;}catch(e){}
-render();showLock();regPeriodic();syncReminder();
+render();if(lockDue())showLock();regPeriodic();syncReminder();
 setTimeout(initSync,0);
 })();
 </script>
