@@ -1,6 +1,6 @@
 /* Life OS service worker: opens instantly and works offline.
    Bump CACHE when you publish a new version so old files are dropped. */
-const CACHE = 'lifeos-v5-2';
+const CACHE = 'lifeos-v6-0';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 const FONTS = ['https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Instrument+Sans:wght@400;500;600&display=swap'];
 
@@ -28,6 +28,10 @@ self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
+  if (req.mode === 'navigate' && url.searchParams.has('nosw')) { // emergency kill switch: open ./?nosw=1
+    e.respondWith((async () => { await self.registration.unregister(); for (const k of await caches.keys()) await caches.delete(k); return fetch(req.url.split('?')[0]); })());
+    return;
+  }
   if (url.hostname === 'api.github.com') return; // never cache sync traffic
   const ok = url.origin === self.location.origin || url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com';
   if (!ok) return;
@@ -93,7 +97,7 @@ self.addEventListener('periodicsync', (e) => {
     if (!rec || !rec.remindOn) return;
     const now = new Date();
     const today = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
-    if (rec.notifiedDate === today) return;
+    if ((await idbGet('notified')) === today) return;
     const hhmm = `${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
     if (hhmm < (rec.remindTime || '21:00')) return;
     // if the saved status is from an earlier day, the app hasn't been opened today yet -> nothing done today
@@ -103,8 +107,7 @@ self.addEventListener('periodicsync', (e) => {
       body: "You have not checked off today's essentials yet.",
       icon: './icon-192.png', badge: './icon-192.png', tag: 'lifeos-daily', renotify: true
     });
-    rec.notifiedDate = today;
-    await idbPut('reminder', rec);
+    await idbPut('notified', today);
   })());
 });
 self.addEventListener('notificationclick', (e) => {
