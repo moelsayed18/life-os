@@ -1,6 +1,6 @@
 /* Life OS service worker: opens instantly and works offline.
    Bump CACHE when you publish a new version so old files are dropped. */
-const CACHE = 'lifeos-v6-0';
+const CACHE = 'lifeos-v6-8';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 const FONTS = ['https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Instrument+Sans:wght@400;500;600&display=swap'];
 
@@ -102,7 +102,10 @@ self.addEventListener('periodicsync', (e) => {
     const today = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
     if ((await idbGet('notified')) === today) return;
     const hhmm = `${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
-    if (hhmm < (rec.remindTime || '21:00')) return;
+    // the page sends a short per-day plan: paused days are skipped and the time follows that day's shift
+    const plan = rec.days && rec.days[today];
+    if (plan && plan.skip) return;
+    if (hhmm < ((plan && plan.t) || rec.remindTime || '21:00')) return;
     // if the saved status is from an earlier day, the app hasn't been opened today yet -> nothing done today
     const doneToday = rec.date === today ? !!rec.minDone : false;
     if (doneToday) return;

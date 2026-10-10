@@ -137,6 +137,40 @@ textarea.inp{min-height:76px;resize:vertical;line-height:1.5}
 .nx-k{display:block;font-size:14px;color:color-mix(in srgb,var(--c) 55%,var(--ink))}
 .nx-name{display:block;font:700 28px/1.15 var(--f-display);letter-spacing:-.02em;margin-top:4px;text-wrap:balance;unicode-bidi:plaintext}
 .nx-meta{display:block;font-size:14px;color:var(--muted);margin-top:6px}
+.nx-why{display:block;margin-top:8px;font-size:14px;color:color-mix(in srgb,var(--c) 55%,var(--ink))}
+.nx-open{margin-top:10px}
+.tasks .irow{border-top:0;min-height:42px}
+.tdue{display:inline-block;margin-inline-start:6px;padding:0 8px;border-radius:999px;border:1px solid var(--line);font-size:12px;color:var(--muted)}
+.tdue.over{border-color:#c0392b;color:#c0392b}
+.tadd{display:flex;gap:8px;margin-top:10px}.tadd .inp{flex:1;min-width:0}
+.trow{display:flex;align-items:center;gap:8px;border-top:1px solid color-mix(in srgb,var(--line) 60%,transparent)}
+.trow .irow{flex:1;min-width:0}.trow .tdate{flex:none;width:136px;padding:6px 8px;font-size:14px}
+.psug{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}
+.chipb{padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:13px;cursor:pointer}
+.box{padding:0;cursor:pointer;font:inherit;color:inherit}
+.row.blk{cursor:default}
+.bxmain{flex:1;min-width:0;background:none;border:0;padding:8px 0;text-align:start;font:inherit;color:inherit;cursor:pointer}
+.bxn{display:inline-block;margin-inline-start:8px;font-size:12px;font-weight:600;color:var(--muted)}
+.hit i{font-style:normal;opacity:.8}
+.ilist{padding:0 14px 12px;padding-inline-start:58px}
+.irow{display:flex;align-items:center;gap:12px;width:100%;min-height:44px;padding:6px 0;background:none;border:0;border-top:1px solid color-mix(in srgb,var(--line) 60%,transparent);text-align:start;font:inherit;color:var(--ink);cursor:pointer}
+.ibox{width:22px;height:22px;border-radius:6px;border:2px solid color-mix(in srgb,var(--c) 60%,var(--line));display:grid;place-items:center;flex:none;transition:background .12s,border-color .12s}
+.ibox svg{width:14px;height:14px;opacity:0}
+.irow.on .ibox{background:var(--c);border-color:var(--c);color:var(--on)}
+.irow.on .ibox svg{opacity:1}
+.irow.on .itx{color:var(--muted)}
+.itx.core{font-weight:600}
+.nx-start{display:block;margin-top:8px;font-size:15px;color:var(--ink)}
+.nx-items{margin-top:6px}
+.nx-items .irow{border-top-color:color-mix(in srgb,var(--c) 18%,transparent)}
+.hfseg{margin-top:12px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.hfseg>*{width:max-content;min-width:100%}
+.hfseg button{white-space:nowrap}
+.strat{margin-top:14px;padding:14px 16px;border-radius:var(--r-m);background:var(--surface);border:1px solid var(--line)}
+.strat h3{font-size:17px}
+.strat p{margin-top:6px;font-size:14px;line-height:1.5;color:var(--muted)}
+.strat b{color:var(--ink);font-weight:600}
+.ftag{flex:none;margin-inline-start:6px;padding:1px 8px;border-radius:999px;border:1px solid var(--c);color:var(--c);font-size:12px;line-height:1.5}
 .nx-do{flex:none;display:grid;place-items:center;width:66px;height:66px;border:0;border-radius:50%;background:var(--c);color:var(--on);transition:transform .12s}
 .nx-do svg{width:30px;height:30px}
 .nx-do:active{transform:scale(.93)}
@@ -199,6 +233,11 @@ textarea.inp{min-height:76px;resize:vertical;line-height:1.5}
 .row.on .box{background:var(--c);border-color:var(--c);color:var(--on)}
 .row.on .box svg{opacity:1}
 .hn{flex:1;unicode-bidi:plaintext}
+.hit{display:block;margin-top:3px;font-size:13px;line-height:1.45;color:var(--muted);font-weight:400;unicode-bidi:plaintext}
+.hit b{color:var(--ink);font-weight:600}
+.row.on .hit b{color:var(--muted)}
+.hm .hedit{flex:1 1 100%;min-height:64px;font-size:14px}
+.hm .hlbl{flex:1 1 100%;font-size:13px;color:var(--muted)}
 .row.on .hn{color:var(--muted)}
 .mb{width:8px;height:8px;border-radius:50%;background:var(--c);flex:none}
 
@@ -449,40 +488,277 @@ var MONTHS=['January','February','March','April','May','June','July','August','S
 var WDAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 var W3=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
+
+/* ================= the routine as blocks =================
+   One box per block. The items inside are reminders only (never separate checkboxes).
+   A leading * marks the minimum-day item inside a block. */
+var BLOCKS=[
+['morning','Wake & Dawn',1,['Wake Up','*Water','Breathing','Morning Prayer','Morning Adhkar','Salawat \uFDFA','Alhamdulillah','Morning Stretch']],
+['morning','Morning Care',1,['*Wash Face','Face Moisturizer','Sunscreen SPF 30+','*Brush Teeth','Clean Tongue','Suwak']],
+['work','Deep Work',1,['Top 3 Priorities','*Most Important Task','Pomodoro / Focus Work']],
+['work','Work Rhythm',0,['Communication Practice','Water','Movement Breaks']],
+['learning','Learning',0,['Learning Session','Busuu / English','IT / Career Learning','Retrieval Practice','Spaced Review']],
+['mind','Mind',0,['Brain Exercise','Positive Self-Talk','Mindful Breathing']],
+['body','Nutrition',0,['Track Calories','Track Protein','Healthy Meals','Fruit / Vegetables','Water']],
+['body','Training & Movement',1,['*Training / Movement','Mobility','Recovery','Walking / Daily Activity']],
+['hygiene','Oral Care',0,['Suwak During The Day','Rinse Mouth With Water After Meals When Needed','Sugar-Free Gum When Needed'],1],
+['hygiene','Body Hygiene',0,['Wash Body As Needed','Clean Armpits','Clean Groin Area','Clean Feet','Change Underwear','Change Socks','Deodorant When Needed'],1],
+['hygiene','Hair',0,['Avoid Unnecessary Daily Hair Washing','Hair Wash According To Hair Type','Shampoo Scalp When Needed','Conditioner After Shampoo','Hair Treatment When Needed'],1],
+['spiritual','Prayers & Adhkar',1,['*Prayers','Evening Adhkar','Istighfar 500+']],
+['spiritual','Quran & Gratitude',0,['Quran','Gratitude']],
+['relationships','Relationships',1,['*Meaningful Connection','Wife Time','Family Connection']],
+['evening','Night Care',0,['Evening Stretch','Wash Face','Face Moisturizer','Body Moisturizer When Needed','Brush Teeth','Floss / Interdental Cleaning','Suwak']],
+['evening','Close the Day',1,['Daily Reflection','Prepare Tomorrow','Digital Shutdown','*Sleep 7+ Hours']]
+];
+var BLOCKS_W=[
+['spiritual','Weekly Spiritual',0,['Surah Al-Kahf','Long Quran Session','Spiritual Reflection']],
+['body','Weekly Fitness',0,['Training Review','Recovery Review','Mobility Review','Weight Trend','Nutrition Review']],
+['learning','Weekly Learning',0,['Learning Review','English Review','Career Learning Review','Knowledge Recall Review']],
+['work','Weekly Work',0,['Weekly Work Review','Biggest Achievement','Biggest Time Waste','Next Week Priorities']],
+['relationships','Weekly Relationships',0,['Quality Time With Wife','Family Time','Friend Connection','Meaningful Conversation']],
+['mind','Weekly Growth',0,['Communication Skill Of The Week','Do Something Different','Character Reflection']],
+['hygiene','Hair Care',0,['Hair Condition Check','Deep Conditioning When Needed','Hair Mask When Needed','Hair Oil Treatment When Needed','Scalp Check']],
+['hygiene','Skin Care',0,['Body Moisturizer','Check Dry Skin','Check Irritation','Check New Skin Changes']],
+['hygiene','Grooming',0,['Trim Nails','Clean Under Nails','Foot Care','Check Body Hair','Trim Underarm Hair When Needed','Trim Pubic Hair When Needed','Trim Nose Hair When Needed','Trim Ear Hair When Needed','Shave / Trim Facial Hair']],
+['hygiene','Oral Health',0,['Floss / Interdental Cleaning','Clean Tongue','Check Gums','Check Teeth','Clean Toothbrush','Replace Toothbrush When Needed']],
+['hygiene','Hygiene Reset',0,['Change Bed Sheets','Change Towels','Wash Towels','Clean Shoes','Laundry Reset','Clean Personal Grooming Tools']],
+['mind','Digital Cleanup',0,['Screen Time Review','Phone Cleanup','Notifications Cleanup']],
+['work','Environment Reset',0,['Room Reset','Desk Reset','Files Cleanup','TickTick Cleanup']],
+['mind','Weekly Review',0,['What Went Well','What Went Wrong','What Did I Learn','What Should I Keep','What Should I Stop','What Should I Start','What Should I Improve','What Kind Of Person Was I This Week']]
+];
+var BLOCKS_M=[
+['body','Monthly Health',0,['Health Review','Energy Review','Sleep Review','Nutrition Review','Weight Trend','Recovery Review']],
+['body','Monthly Fitness',0,['Training Progress Review','Strength Progress Review','Mobility Progress Review','Conditioning Progress Review']],
+['learning','Monthly Learning',0,['Learning Progress Review','English Progress Review','IT / Career Progress Review']],
+['work','Monthly Work',0,['Career Progress Review','Biggest Achievement','Biggest Challenge','Biggest Lesson']],
+['relationships','Monthly Relationships',0,['Marriage Review','Family Review','Friendship Review']],
+['spiritual','Monthly Spiritual',0,['Faith Review','Quran Review','Spiritual Growth Review']],
+['hygiene','Monthly Personal Care',0,['Hair Health Review','Skin Health Review','Oral Health Review','Grooming Review']],
+['work','Monthly Finance',0,['Money Review','Spending Review','Saving Review']],
+['mind','Monthly Digital',0,['Screen Time Review','Digital Distraction Review']],
+['mind','Monthly Reset',0,['Keep','Stop','Improve','Start']],
+['mind','Next Month Plan',0,['Main Priority','Personal Goal','Health Goal','Career Goal','Relationship Goal']]
+];
+var BLOCKS_Q=[
+['mind','Life Audit',0,['Faith Review','Health Review','Fitness Review','Sleep Review','Career Review','Money Review','Learning Review','Marriage Review','Family Review','Friendship Review','Character Review','Personal Growth Review']],
+['body','Health Audit',0,['Sleep Quality','Energy','Nutrition','Fitness','Recovery','Mobility','Skin','Hair','Oral Health','Grooming']],
+['work','90-Day Plan',0,['Main Goal','Why','Success Measure','Biggest Obstacle','Action Plan']],
+['mind','If\u2013Then Plans',0,['Predictable Obstacle','If\u2013Then Solution']],
+['mind','Next 90 Days',0,['Goal 1','Goal 2','Goal 3']],
+['hygiene','Periodic Checks',0,['Dental Checkup','Dental Cleaning When Recommended','Medical Checkup When Appropriate','Eye Checkup When Needed','Skin Check When Needed','Hair / Scalp Check When Needed','Replace Razor Blades','Replace Toothbrush','Clean Grooming Tools','Review Personal Care Products']]
+];
+function addBlocks(s,list,freq){
+  list.forEach(function(b){
+    s.habits.push({id:'h'+pad(s.nextId++),s:b[0],n:b[1],min:freq==='daily'&&!!b[2],on:true,freq:freq,k:'',blk:1,it:b[3].slice(),nd:freq==='daily'&&!!b[4]});
+  });
+}
+/* ---- block checklist: item ticks are stored per day; a block is done when its core items are done ---- */
+function itKey(h,d){var fc=freqCode(h.freq);return fc?'p:'+periodOf(fc,d).key:d;}
+function hDone(h,d){return freqCode(h.freq)?isPeriodDone(h,d):isDone(h.id,d);}
+function setHDone(h,d,val){
+  if(freqCode(h.freq)){var P=periodOf(freqCode(h.freq),d),k=h.id+'@'+P.key;state.periodDone=state.periodDone||{};if(!!state.periodDone[k]!==val){state.periodDone[k]=val;touch('core');}}
+  else{setDone(h.id,d,val);syncCnt(h.id,d,val);}
+}
+function itBits(h,d){
+  var n=(h.it||[]).length,r=state.itemLog&&state.itemLog[itKey(h,d)]&&state.itemLog[itKey(h,d)][h.id];
+  if(typeof r==='string'&&r.length===n)return r;
+  return new Array(n+1).join(hDone(h,d)?'1':'0');
+}
+function itCore(h){
+  var st=[];(h.it||[]).forEach(function(x,i){if(x.charAt(0)==='*')st.push(i);});
+  return st.length?st:(h.it||[]).map(function(x,i){return i;});
+}
+function itNeed(h){return (ui.minOnly&&h.min)?itCore(h):(h.it||[]).map(function(x,i){return i;});}
+function itemsAll(h,d,val){
+  if(!h||!h.it||!h.it.length)return;
+  var k=itKey(h,d);state.itemLog=state.itemLog||{};
+  var o=state.itemLog[k]||(state.itemLog[k]={});
+  if(val)o[h.id]=new Array(h.it.length+1).join('1');else delete o[h.id];
+  if(!Object.keys(o).length)delete state.itemLog[k];
+  if(k===d)dayTouch(d);
+}
+function setItem(h,d,i){
+  var b=itBits(h,d).split('');if(i<0||i>=b.length)return;
+  b[i]=b[i]==='1'?'0':'1';
+  var k=itKey(h,d);state.itemLog=state.itemLog||{};
+  (state.itemLog[k]||(state.itemLog[k]={}))[h.id]=b.join('');
+  if(k===d)dayTouch(d);
+  var all=itNeed(h).every(function(q){return b[q]==='1';}),was=hDone(h,d);
+  if(all!==was){setHDone(h,d,all);if(all){buzz(12);ui.pop=h.id;}}else touch('core');
+}
+function itemsList(h,d,cls,onlyCore){
+  var bits=itBits(h,d),core=itCore(h),hasStar=h.it.some(function(x){return x.charAt(0)==='*';});
+  return h.it.map(function(x,i){
+    if(onlyCore&&hasStar&&core.indexOf(i)<0)return '';
+    var on=bits.charAt(i)==='1',st=x.charAt(0)==='*';
+    return '<button class="irow'+(on?' on':'')+'" data-act="itm" data-h="'+h.id+'" data-i="'+i+'" role="checkbox" aria-checked="'+on+'"><span class="ibox">'+CHECK+'</span><span class="itx'+(st?' core':'')+'">'+esc(stripStar(x))+'</span></button>';
+  }).join('');
+}
+function itShort(h){
+  var list=h.it||[];if(!list.length)return '';
+  var st=list.filter(function(x){return x.charAt(0)==='*';}),show=st.length?st:list.slice(0,3),rest=list.length-show.length;
+  return '<span class="hit">'+show.map(function(x){return esc(stripStar(x));}).join(', ')+(rest>0?' <i>+'+rest+' more</i>':'')+'</span>';
+}
+function stripStar(x){return String(x).replace(/^\*\s*/,'');}
+function itHTML(h,mini){
+  var list=(h.it||[]);if(!list.length)return '';
+  if(mini&&h.min){var st=list.filter(function(x){return x.charAt(0)==='*';});if(st.length)list=st;}
+  return '<span class="hit">'+list.map(function(x){var st=x.charAt(0)==='*',t=esc(stripStar(x));return st&&!mini?'<b>'+t+'</b>':t;}).join(', ')+'</span>';
+}
+
+//--PARSE-BEGIN
+function normAr(s) {
+  return String(s || '').toLowerCase()
+    .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
+    .replace(/[\u0623\u0625\u0622]/g, '\u0627')
+    .replace(/\u0629/g, '\u0647')
+    .replace(/\u0649/g, '\u064A')
+    .replace(/[\u060C\u061B.,;:!?\u061F"'()\[\]]/g, '');
+}
+function parseCapture(text, today) {
+  var raw = String(text || '').trim();
+  var NOTE_PREFIX = /^(\u0641\u0643\u0631\u0647|\u0641\u0643\u0631\u0629|\u0645\u0644\u0627\u062D\u0638\u0647|\u0645\u0644\u0627\u062D\u0638\u0629|idea|note)\s*[:\uFF1A\-]\s*/i;
+  var TASK_PREFIX = /^(\u0645\u0647\u0645\u0629|\u0645\u0647\u0645\u0647|task|todo)\s*[:\uFF1A\-]\s*/i;
+  var forced = '';
+  var m = NOTE_PREFIX.exec(raw);
+  if (m) { forced = 'note'; raw = raw.slice(m[0].length).trim(); }
+  else { m = TASK_PREFIX.exec(raw); if (m) { forced = 'task'; raw = raw.slice(m[0].length).trim(); } }
+  var DAYS = { 'السبت': 6, 'الاحد': 0, 'الاثنين': 1, 'الاتنين': 1, 'الثلاثاء': 2, 'التلات': 2, 'الثلاثا': 2, 'الاربعاء': 3, 'الاربع': 3, 'الخميس': 4, 'الجمعه': 5,
+    sat: 6, saturday: 6, sun: 0, sunday: 0, mon: 1, monday: 1, tue: 2, tues: 2, tuesday: 2, wed: 3, wednesday: 3, thu: 4, thur: 4, thurs: 4, thursday: 4, fri: 5, friday: 5 };
+  var T0 = { 'النهارده': 1, 'النهارد': 1, 'انهارده': 1, 'اليوم': 1, 'today': 1 };
+  var T1 = { 'بكره': 1, 'بكرا': 1, 'غدا': 1, 'غدًا': 1, 'tomorrow': 1, 'tmrw': 1 };
+  var toks = raw.split(/\s+/).filter(Boolean), keep = [], due = '', i, a, b;
+  function plus(n) { var p = today.split('-').map(Number), d = new Date(Date.UTC(p[0], p[1] - 1, p[2] + n)); return d.toISOString().slice(0, 10); }
+  function dow(s) { var p = s.split('-').map(Number); return new Date(Date.UTC(p[0], p[1] - 1, p[2])).getUTCDay(); }
+  for (i = 0; i < toks.length; i++) {
+    a = normAr(toks[i]); b = i + 1 < toks.length ? normAr(toks[i + 1]) : '';
+    var c = i + 2 < toks.length ? normAr(toks[i + 2]) : '';
+    if (!due && a === 'بعد' && (b === 'بكره' || b === 'بكرا' || b === 'غد')) { due = plus(2); i += 1; continue; }
+    if (!due && a === 'day' && b === 'after' && c === 'tomorrow') { due = plus(2); i += 2; continue; }
+    if (!due && T0[a]) { due = today; continue; }
+    if (!due && T1[a]) { due = plus(1); continue; }
+    if (!due && a === 'يوم' && DAYS[b] !== undefined) { due = null; }
+    if (!due && DAYS[a] !== undefined && a.length > 2) {
+      var diff = (DAYS[a] - dow(today) + 7) % 7; if (diff === 0) diff = 7;
+      due = plus(diff);
+      if (keep.length && normAr(keep[keep.length - 1]) === 'يوم') keep.pop();
+      continue;
+    }
+    if (due === null) due = '';
+    keep.push(toks[i]);
+  }
+  var title = keep.join(' ').replace(/^(\u0630\u0643\u0631\u0646\u064A|\u0630\u0643\u0631\u0646\u0649|remind me to|remind me)\s+/i, '').replace(/^(\u0627\u0646|\u0628)\s+/, '').replace(/[\s\u060C,;:\-]+$/, '').replace(/\s+(on|by|at|\u064A\u0648\u0645|\u0641\u064A)$/i, '').trim();
+  if (!title) title = raw;
+  var TASK_VERBS = ['اشتري', 'اشتر', 'راجع', 'ذاكر', 'كلم', 'اتصل', 'ابعت', 'خلص', 'احجز', 'ادفع', 'جدد', 'ظبط', 'شوف', 'افتكر', 'سجل', 'نضف', 'حضر', 'جهز', 'رتب', 'سلم', 'اطلب', 'اعمل', 'روح', 'هات', 'ذكرني',
+    'buy', 'call', 'send', 'book', 'pay', 'review', 'finish', 'check', 'fix', 'ask', 'email', 'renew', 'prepare', 'clean', 'schedule', 'submit', 'remind'];
+  var first = normAr(String(text || '').replace(NOTE_PREFIX, '').replace(TASK_PREFIX, '').trim().split(/\s+/)[0]);
+  var kind = forced || (due ? 'task' : (TASK_VERBS.indexOf(first) >= 0 ? 'task' : 'note'));
+  return { kind: kind, title: title, due: kind === 'task' ? (due || '') : '' };
+}
+//--PARSE-END
+/* ================= tasks: the assistant's to-do list ================= */
+function taskAdd(title,due,id,src){
+  state.tasks=state.tasks||[];
+  if(id&&state.tasks.some(function(x){return x.id===id;}))return null;
+  var now=Date.now(),t={id:id||nid(state,'t'),t:String(title||'').slice(0,200),due:due||'',done:0,ts:now,u:now};
+  if(src)t.src=src;
+  state.tasks.unshift(t);touch('core');return t;
+}
+function tasksOpen(){return (state.tasks||[]).filter(function(x){return !x.x&&!x.done;});}
+function tasksDueBy(d){return tasksOpen().filter(function(x){return x.due&&x.due<=d;}).sort(function(a,b){return a.due<b.due?-1:a.due>b.due?1:(b.ts-a.ts);});}
+function tasksUndated(){return tasksOpen().filter(function(x){return !x.due;});}
+function dueLabel(due,t){
+  if(!due)return '';
+  if(due<t)return 'Overdue, '+fmtDay(due);
+  if(due===t)return 'Today';
+  if(due===addDays(t,1))return 'Tomorrow';
+  return fmtDay(due);
+}
+function mergeTasks(a,b){
+  var by={};
+  [a,b].forEach(function(list){(list||[]).forEach(function(x){if(!x||!x.id)return;var o=by[x.id];if(!o||(x.u||0)>=(o.u||0))by[x.id]=x;});});
+  return Object.keys(by).map(function(k){return by[k];}).sort(function(p,q){return (q.ts||0)-(p.ts||0);});
+}
+function taskRowHTML(x,t){
+  var lab=dueLabel(x.due,t),over=x.due&&x.due<t;
+  return '<button class="irow" data-act="ttoggle" data-t="'+x.id+'" role="checkbox" aria-checked="false"><span class="ibox">'+CHECK+'</span><span class="itx">'+esc(x.t)+(lab?' <span class="tdue'+(over?' over':'')+'">'+esc(lab)+'</span>':'')+(x.src==='tg'?' <span class="tdue">Telegram</span>':'')+'</span></button>';
+}
+function tasksPanel(d){
+  var t=todayStr();if(d!==t)return '';
+  var due=tasksDueBy(t),und=tasksUndated(),list=due.concat(und),show=list.slice(0,6),rest=list.length-show.length;
+  var h='<div class="panel tasks" style="--c:var(--accent)"><h3>Tasks'+(list.length?' <span class="hint">'+list.length+' open</span>':'')+'</h3>';
+  h+=show.length?show.map(function(x){return taskRowHTML(x,t);}).join(''):'<p class="hint">Nothing waiting. Add what is on your mind below.</p>';
+  if(rest>0)h+='<p class="hint" style="margin-top:6px">+'+rest+' more in Plan</p>';
+  h+='<div class="tadd"><input class="inp" id="taskIn" placeholder="Add a task. Try: call the bank tomorrow" aria-label="New task"><button class="btn sm2 pri" data-act="tadd" data-in="taskIn">Add</button></div></div>';
+  return h;
+}
+function prioSug(d,notes){
+  if(d!==todayStr())return '';
+  var used=[1,2,3].map(function(n){return String(notes['p'+n]||'').trim();});
+  if(used.every(Boolean))return '';
+  var cand=tasksDueBy(d).filter(function(x){return used.indexOf(x.t)<0;}).slice(0,3);
+  if(!cand.length)return '';
+  return '<div class="psug"><span class="hint">From your tasks</span>'+cand.map(function(x){return '<button class="chipb" data-act="tprio" data-t="'+x.id+'">'+esc(x.t.length>34?x.t.slice(0,33)+'\u2026':x.t)+'</button>';}).join('')+'</div>';
+}
+function tasksPlanPanel(){
+  var t=todayStr(),open=tasksOpen(),doneN=(state.tasks||[]).filter(function(x){return !x.x&&x.done;}).length;
+  var groups=[['Overdue',open.filter(function(x){return x.due&&x.due<t;})],['Today',open.filter(function(x){return x.due===t;})],['Upcoming',open.filter(function(x){return x.due&&x.due>t;}).sort(function(a,b){return a.due<b.due?-1:1;})],['No date',open.filter(function(x){return !x.due;})]];
+  var h='<div class="panel tasks" style="--c:var(--accent)"><h3>Tasks</h3><p class="hint" style="margin-bottom:8px">Write it the way you would say it: a verb, a day, done. Dates like tomorrow, Saturday, \u0628\u0643\u0631\u0629 and \u0627\u0644\u0633\u0628\u062A are understood.</p>';
+  groups.forEach(function(g){
+    if(!g[1].length)return;
+    h+='<h4 style="margin:12px 0 2px;font-size:14px;color:var(--muted)">'+g[0]+' ('+g[1].length+')</h4>'+g[1].map(function(x){
+      return '<div class="trow"><button class="irow" data-act="ttoggle" data-t="'+x.id+'" role="checkbox" aria-checked="false"><span class="ibox">'+CHECK+'</span><span class="itx">'+esc(x.t)+'</span></button><input class="inp tdate" type="date" data-td="'+x.id+'" value="'+esc(x.due||'')+'" aria-label="Due date"><button class="sm" data-act="tdel" data-t="'+x.id+'" aria-label="Delete task">Delete</button></div>';
+    }).join('');
+  });
+  if(!open.length)h+='<p class="hint">No open tasks.</p>';
+  h+='<div class="tadd"><input class="inp" id="taskIn2" placeholder="Add a task" aria-label="New task"><button class="btn sm2 pri" data-act="tadd" data-in="taskIn2">Add</button></div>';
+  if(doneN)h+='<div class="btns" style="margin-top:10px"><button class="btn sm2" data-act="tclear">Clear '+doneN+' done</button></div>';
+  return h+'</div>';
+}
+async function importInbox(){
+  var cfg=syncCfg();if(!cfg)return;
+  try{
+    var res=await fetch('https://api.github.com/repos/'+cfg.repo+'/contents/bot/inbox.json',{headers:ghHeaders(cfg),cache:'no-store'});
+    if(!res.ok)return;
+    var j=await res.json(),obj=JSON.parse(b64d(j.content||'')),items=(obj&&obj.items)||[],n=0;
+    state.inboxSeen=state.inboxSeen||{};
+    items.forEach(function(it){
+      if(!it||!it.id||!it.text||state.inboxSeen[it.id])return;
+      var pc=parseCapture(it.text,/^\d{4}-\d\d-\d\d$/.test(it.day||'')?it.day:todayStr());
+      if(pc.kind==='task')taskAdd(pc.title,pc.due,'tg'+it.id,'tg');
+      else if(!(state.qnotes||[]).some(function(q){return q.id==='ntg'+it.id;}))state.qnotes.unshift({id:'ntg'+it.id,t:pc.title.slice(0,80),b:pc.title.length>80?pc.title:'',pin:false,inb:1,ts:Date.now(),upd:Date.now()});
+      state.inboxSeen[it.id]=1;n++;
+    });
+    if(n){var ks=Object.keys(state.inboxSeen);if(ks.length>300)ks.slice(0,ks.length-300).forEach(function(k){delete state.inboxSeen[k];});touch('core','journal');safeRender();toast(n+(n>1?' items':' item')+' from Telegram');}
+  }catch(e){}
+}
+
 var SECTIONS=[
- {id:'morning',name:'Morning',c:'--c-morning'},
- {id:'hygiene',name:'Personal Hygiene',c:'--c-hygiene'},
+ {id:'morning',name:'Before Shift',c:'--c-morning'},
+ {id:'hygiene',name:'Personal Care',c:'--c-hygiene'},
  {id:'work',name:'Work',c:'--c-work'},
  {id:'learning',name:'Learning',c:'--c-learning'},
  {id:'mind',name:'Mind',c:'--c-mind'},
  {id:'body',name:'Body & Health',c:'--c-body'},
  {id:'spiritual',name:'Spiritual',c:'--c-spiritual'},
  {id:'relationships',name:'Relationships',c:'--c-relationships'},
- {id:'evening',name:'Evening',c:'--c-evening'}
+ {id:'evening',name:'After Shift',c:'--c-evening'}
 ];
 var SEC={};SECTIONS.forEach(function(s){SEC[s.id]=s;});
 
-var H=[
-['morning','Wake Up'],['morning','Water'],['morning','Breathing'],['morning','Morning Prayer'],['morning','Morning Adhkar'],['morning','Salawat \uFDFA'],['morning','Alhamdulillah'],['morning','Morning Stretch',0,'stretchM'],
-['hygiene','Brush Teeth',1],['hygiene','Face Care',1],
-['work','Top 3 Priorities'],['work','Most Important Task',1],['work','Pomodoro / Focus Work',0,'focus'],['work','Communication Practice'],
-['learning','Learning Session'],['learning','Busuu / English'],['learning','IT / Career Learning'],['learning','Retrieval Practice'],['learning','Spaced Review'],
-['mind','Brain Exercise'],['mind','Positive Self-Talk'],
-['body','Training / Movement',1,'training'],['body','Mobility',0,'mobility'],['body','Track Calories',0,'cal'],['body','Track Protein',0,'pro'],['body','Recovery'],['body','Water',1],
-['spiritual','Prayers',1],['spiritual','Evening Adhkar'],['spiritual','Istighfar 500+'],['spiritual','Quran'],['spiritual','Gratitude'],
-['relationships','Meaningful Connection',1],['relationships','Wife Time'],['relationships','Family Connection'],
-['evening','Evening Stretch',0,'stretchE'],['evening','Daily Reflection'],['evening','Prepare Tomorrow'],['evening','Digital Shutdown'],['evening','Sleep 7+ Hours',1,'sleep']
-];
 var AUTOTICK_NAMES={'Training / Movement':'training','Track Calories':'cal','Track Protein':'pro','Sleep 7+ Hours':'sleep','Pomodoro / Focus Work':'focus','Morning Stretch':'stretchM','Evening Stretch':'stretchE','Mobility':'mobility'};
 var FREQS=[['daily','Daily'],['weekly','Weekly'],['monthly','Monthly'],['quarterly','Quarterly'],['yearly','Yearly']];
 var FREQ_SET={};FREQS.forEach(function(f){FREQ_SET[f[0]]=1;});
 
-var RULES=['Consistency Over Perfection','Systems Over Motivation','Environment Over Willpower','Sleep Before Extra Productivity','Quality Over Quantity','Learn \u2192 Recall \u2192 Apply','Actions + Outcomes','Never Let One Bad Day Become A Bad Week','Review The System','Build A Better Life'];
+var RULES=['Consistency Over Perfection','Systems Over Motivation','Environment Over Willpower','Sleep Before Extra Productivity','Quality Over Quantity','Learn \u2192 Recall \u2192 Apply','Actions + Outcomes','Health Before Appearance','Don\u2019t Overcomplicate Personal Care','Don\u2019t Use Products Without A Reason','Don\u2019t Chase Every New Health Trend','Never Let One Bad Day Become A Bad Week','Review The System','Build A Better Life'];
+var NEWRULES_6=['Health Before Appearance','Don\u2019t Overcomplicate Personal Care','Don\u2019t Use Products Without A Reason','Don\u2019t Chase Every New Health Trend'];
 
 function T(id,l){return {id:id,k:'t',l:l};}
 function R(id,l){return {id:id,k:'r',l:l};}
-var AREAS_M=['Faith','Health','Fitness','Sleep','Career','Money','Learning','Marriage','Family','Character','Digital'];
-var AREAS_Q=['Faith','Health','Fitness','Sleep','Career','Money','Learning','Marriage','Family','Character','Personal Growth'];
+var AREAS_M=['Faith','Health','Fitness','Sleep','Career','Money','Learning','Marriage','Family','Friendship','Character','Digital'];
+var AREAS_Q=['Faith','Health','Fitness','Sleep','Career','Money','Learning','Marriage','Family','Friendship','Character','Personal Growth'];
+var HEALTH_AUDIT=['Sleep Quality','Energy','Nutrition','Fitness','Recovery','Mobility','Skin','Hair','Oral Health','Grooming'];
+function healthItems(){return HEALTH_AUDIT.map(function(a){return R('ha_'+a.toLowerCase().replace(/ /g,'_'),a);});}
 function areaId(a){return 'a_'+a.toLowerCase().replace(/ /g,'_');}
 function areaItems(list){return list.map(function(a){return R(areaId(a),a);});}
 
@@ -490,16 +766,18 @@ var TPL={
  w:{title:'Weekly review',groups:[
   {t:'Work',c:'--c-work',items:[T('ach','Biggest Achievement'),T('waste','Biggest Time Waste'),T('next','Next Week Priorities')]},
   {t:'Personal Growth',c:'--c-mind',items:[T('comm','Communication Skill Of The Week')]},
+  {t:'System Change',c:'--c-spiritual',items:[T('rem','What I will remove or reduce'),T('auto','What I will make easier or automate'),T('chg','The one change for next week')]},
   {t:'Weekly Review',c:'--c-evening',items:[T('well','What Went Well'),T('wrong','What Went Wrong'),T('learn','What Did I Learn'),T('keep','What Should I Keep'),T('stop','What Should I Stop'),T('start','What Should I Start'),T('improve','What Should I Improve'),T('kind','What Kind Of Person Was I This Week')]}
  ]},
  m:{title:'Monthly review',groups:[
   {t:'Life Review \u2013 rate each area 1 to 5',c:'--c-work',items:areaItems(AREAS_M)},
-  {t:'Monthly Reflection',c:'--c-mind',items:[T('ach','Biggest Achievement'),T('mist','Biggest Mistake'),T('lesson','Biggest Lesson'),T('besth','Best Habit'),T('worsth','Worst Habit'),T('distr','Biggest Distraction')]},
+  {t:'Monthly Reflection',c:'--c-mind',items:[T('ach','Biggest Achievement'),T('chal','Biggest Challenge'),T('mist','Biggest Mistake'),T('lesson','Biggest Lesson'),T('besth','Best Habit'),T('worsth','Worst Habit'),T('distr','Biggest Distraction')]},
   {t:'Monthly Reset',c:'--c-evening',items:[T('keep','Keep'),T('stop','Stop'),T('improve','Improve'),T('start','Start')]},
-  {t:'Next Month',c:'--c-body',items:[T('prio','Main Priority'),T('pgoal','Personal Goal'),T('rgoal','Relationship Goal')]}
+  {t:'Next Month',c:'--c-body',items:[T('prio','Main Priority'),T('pgoal','Personal Goal'),T('hgoal','Health Goal'),T('cgoal','Career Goal'),T('rgoal','Relationship Goal')]}
  ]},
  q:{title:'Quarterly review',groups:[
   {t:'Life Audit \u2013 rate each area 1 to 5',c:'--c-work',items:areaItems(AREAS_Q)},
+  {t:'Health Audit \u2013 rate each 1 to 5',c:'--c-body',items:healthItems()},
   {t:'90-Day Planning',c:'--c-spiritual',items:[T('goal','Main Goal'),T('why','Why'),T('succ','Success Measure'),T('obst','Biggest Obstacle'),T('plan','Action Plan')]},
   {t:'If\u2013Then Planning',c:'--c-relationships',items:[T('pobst','Predictable Obstacle'),T('ifthen','If\u2013Then Solution')]},
   {t:'Next 90 Days',c:'--c-body',items:[T('g1','Goal 1'),T('g2','Goal 2'),T('g3','Goal 3')]}
@@ -731,11 +1009,35 @@ var STANDALONE=true;
 var LS_KEY='lifeos.v1',UI_KEY='lifeos.ui';
 var storageOK=true;
 try{localStorage.setItem('__t','1');localStorage.removeItem('__t');}catch(e){storageOK=false;}
-var DOCS={core:['v','habits','nextId','log','goals','targets','settings','seq','body','focus','stretchLog','shifts','off','counts','mood','dayTs','periodDone','importedAthleticPlan','importedWeeklyHabits','rules'],journal:['notes','reviews','qnotes','study'],train:['exercises','plans','workouts','program','tests'],money:['money']};
+var DOCS={core:['v','blockStart','experiments','itemLog','tasks','inboxSeen','habits','nextId','log','goals','targets','settings','seq','body','focus','stretchLog','shifts','off','counts','mood','dayTs','periodDone','importedAthleticPlan','importedWeeklyHabits','rules'],journal:['notes','reviews','qnotes','study'],train:['exercises','plans','workouts','program','tests'],money:['money']};
 
 /* schema ladder: add one function per version bump, keyed by the version it upgrades FROM */
 var NEWRULE='Anchor to the day type (morning, night, off), not the clock';
-var SCHEMA=5,MIGRATIONS={3:function(s){s.dayTs=s.dayTs||{};},4:function(s){if(Array.isArray(s.rules)&&s.rules.indexOf(NEWRULE)<0)s.rules.push(NEWRULE);}};
+var SCHEMA=8,MIGRATIONS={3:function(s){s.dayTs=s.dayTs||{};},4:function(s){if(Array.isArray(s.rules)&&s.rules.indexOf(NEWRULE)<0)s.rules.push(NEWRULE);},
+5:function(s){
+  /* routine as blocks: archive every old habit (history is kept) and add the new blocks once */
+  if(s.habits.some(function(h){return h.blk;}))return;
+  s.habits.forEach(function(h){h.on=false;});
+  addBlocks(s,BLOCKS,'daily');addBlocks(s,BLOCKS_W,'weekly');addBlocks(s,BLOCKS_M,'monthly');addBlocks(s,BLOCKS_Q,'quarterly');
+  s.blockStart=todayStr();
+  if(Array.isArray(s.rules))NEWRULES_6.forEach(function(r){if(s.rules.indexOf(r)<0){var i=s.rules.indexOf('Never Let One Bad Day Become A Bad Week');if(i<0)s.rules.push(r);else s.rules.splice(i,0,r);}});
+},
+6:function(s){
+  /* tidy-up of the block layout: Morning Care sits under Before Shift; Oral Care, Body Hygiene and Hair are "as needed" */
+  s.habits.forEach(function(h){
+    if(!h.blk||(h.freq||'daily')!=='daily')return;
+    if(h.n==='Morning Care'&&h.s==='hygiene')h.s='morning';
+    if(h.n==='Oral Care'||h.n==='Body Hygiene'||h.n==='Hair'){h.nd=true;h.min=false;}
+  });
+},
+7:function(s){
+  /* give every habit a lifetime so past days keep the habits they were really measured against */
+  var bs=s.blockStart;if(!bs)return;
+  s.habits.forEach(function(h){
+    if(h.blk){if(!h.from)h.from=bs;}
+    else if(!h.on&&!h.to&&(h.freq||'daily')==='daily')h.to=addDays(bs,-1);
+  });
+}};
 function nid(s,p){s.seq=(s.seq||1)+1;return p+s.seq;}
 function seedTraining(s){
   var idBy={};
@@ -744,8 +1046,8 @@ function seedTraining(s){
 }
 function defaultState(){
   var s={v:2,ts:{core:0,journal:0,train:0},
-    habits:H.map(function(h,i){return {id:'h'+pad(i+1),s:h[0],n:h[1],min:!!h[2],on:true,freq:'daily',k:h[3]||''};}),
-    nextId:H.length+1,log:{},notes:{},reviews:{},goals:[],seq:1,body:{},focus:{},stretchLog:{},workouts:{},
+    habits:[],tasks:[],inboxSeen:{},importedWeeklyHabits:1,
+    nextId:1,log:{},notes:{},reviews:{},goals:[],seq:1,body:{},focus:{},stretchLog:{},workouts:{},
     qnotes:[],money:{tx:[],budgets:{},split:{ess:55,fun:10,charity:5,short:15,long:15},shortGoal:{n:'',t:0}}};
   return normalize(s);
 }
@@ -755,8 +1057,20 @@ function normalize(s){
     if(h.freq!=='weekly'&&h.freq!=='monthly'&&h.freq!=='quarterly'&&h.freq!=='yearly')h.freq='daily';
     if(h.k===undefined)h.k=AUTOTICK_NAMES[h.n]||'';
     if(h.sh!=='M'&&h.sh!=='E')h.sh='';h.tg=+h.tg>0?+h.tg:0;
+    if(!/^\d{4}-\d\d-\d\d$/.test(h.from||''))delete h.from;if(!/^\d{4}-\d\d-\d\d$/.test(h.to||''))delete h.to;
+    h.nd=!!h.nd&&(h.freq||'daily')==='daily'&&!h.min;
+    h.it=Array.isArray(h.it)?h.it.map(function(x){return String(x).trim();}).filter(Boolean).slice(0,40):[];
   });
   s.periodDone=(s.periodDone&&typeof s.periodDone==='object')?s.periodDone:{};
+  (function(){var il=(s.itemLog&&typeof s.itemLog==='object'&&!Array.isArray(s.itemLog))?s.itemLog:{},cut=addDays(todayStr(),-150),o={};
+    Object.keys(il).forEach(function(k){var dk=k.charAt(0)==='p'?k.slice(k.indexOf(':',2)+1):k;if(dk>=cut&&il[k]&&typeof il[k]==='object')o[k]=il[k];});s.itemLog=o;})();
+  (function(){var cut=Date.now(),L=Array.isArray(s.tasks)?s.tasks:[],o=[];
+    L.forEach(function(x){if(!x||!x.id||typeof x.t!=='string')return;
+      var due=/^\d{4}-\d\d-\d\d$/.test(x.due||'')?x.due:'',u=+x.u||+x.ts||0;
+      if(x.x&&cut-u>30*86400000)return;if(!x.x&&x.done&&cut-u>60*86400000)return;
+      var t={id:String(x.id),t:x.t.slice(0,200),due:due,done:x.done?1:0,ts:+x.ts||u,u:u};if(x.x)t.x=1;if(x.src)t.src=x.src;o.push(t);});
+    s.tasks=o;s.inboxSeen=(s.inboxSeen&&typeof s.inboxSeen==='object'&&!Array.isArray(s.inboxSeen))?s.inboxSeen:{};})();
+  s.experiments=(Array.isArray(s.experiments)?s.experiments:[]).filter(function(e){return e&&e.id&&e.t&&e.start&&typeof e.m==='string';});
   s.dayTs=(s.dayTs&&typeof s.dayTs==='object')?s.dayTs:{};
   s.log=s.log||{};s.notes=s.notes||{};s.reviews=s.reviews||{};s.goals=s.goals||[];
   var sy=s.study=(s.study&&typeof s.study==='object')?s.study:{};
@@ -801,6 +1115,7 @@ var ui={tab:'today',date:todayStr(),minOnly:!!state.settings.minDefault,month:to
         train:{sub:'log',ex:'',plan:'',pgrp:''},confirm:'',exportText:'',importText:'',msg:'',sync:storageOK?'local':'none',
         money:{month:todayStr().slice(0,7),type:'out',sub:'activity'},notes:{q:''},set:'general',stats:{wheel:'m'},
         fold:(savedUI.fold&&typeof savedUI.fold==='object')?savedUI.fold:{},last:{},undo:null,nudge:true,pop:null,pending:null,installEv:null,syncErr:'',syncForm:null};
+['weekly','monthly','quarterly','yearly'].forEach(function(f){if(ui.fold['freq_'+f]===undefined)ui.fold['freq_'+f]=true;});if(ui.fold.need===undefined)ui.fold.need=true; /* periodic blocks start collapsed so Today stays about today */
 var THEME_COLORS={light:'#F1F3F6',dark:'#0D1120'};
 function resolvedTheme(){
   var t=state.settings.theme;
@@ -844,7 +1159,8 @@ function cntOf(hid,ds){return ((state.counts[ds]||{})[hid])||0;}
 function setCnt(hid,ds,v){var m=state.counts[ds]||(state.counts[ds]={});if(v>0)m[hid]=v;else delete m[hid];dayTouch(ds);touch('core');}
 function syncCnt(hid,ds,val){var h=state.habits.find(function(x){return x.id===hid;});if(h&&h.tg>0)setCnt(hid,ds,val?h.tg:0);}
 function cntStep(h){var t=h.tg||1;return t>=100?50:(t>=30?10:1);}
-function activeHabits(d){var sh=d?shiftOf(d):'';return state.habits.filter(function(h){return h.on&&(h.freq||'daily')==='daily'&&(!h.sh||!sh||sh==='O'||h.sh===sh);});}
+function alive(h,day){if(h.from&&day<h.from)return false;if(h.on)return true;return !!h.to&&day<=h.to;}
+function activeHabits(d,all){var sh=d?shiftOf(d):'',day=d||todayStr();return state.habits.filter(function(h){return alive(h,day)&&(all||!h.nd)&&(h.freq||'daily')==='daily'&&(!h.sh||!sh||sh==='O'||h.sh===sh);});}
 function periodHabits(freq){return state.habits.filter(function(h){return h.on&&h.freq===freq;});}
 function freqCode(freq){return {weekly:'w',monthly:'m',quarterly:'q',yearly:'y'}[freq]||'';}
 function isPeriodDone(h,ds){
@@ -1075,7 +1391,7 @@ function notesFiltered(){
 /* ================= persistence & sync ================= */
 var rev=0,saveT=null,pushT=null,dirty={},sync={refs:null,busy:false,checked:false},lastPull=0,toastT=null;
 function dayTouch(d){if(d&&state.dayTs)state.dayTs[d]=Date.now();}
-var DAYMAPS=['body','mood','counts','shifts','off'];
+var DAYMAPS=['body','mood','counts','shifts','off','itemLog'];
 function snapshot(why){try{var a=JSON.parse(localStorage.getItem('lifeos.snaps')||'[]');a.push({t:Date.now(),why:why||'merge',s:JSON.stringify(state)});while(a.length>3||JSON.stringify(a).length>1.5e6)a.shift();localStorage.setItem('lifeos.snaps',JSON.stringify(a));}catch(e){try{localStorage.removeItem('lifeos.snaps');}catch(x){}}}
 /* per-day merge: the side that edited a day last wins that day, so unticks and edits from both devices survive */
 function mergeCoreDays(mine,remote){
@@ -1114,7 +1430,7 @@ function touch(){
 function scheduleSave(){clearTimeout(saveT);saveT=setTimeout(function(){persistLocal();schedulePush();},450);}
 function persistLocal(){try{localStorage.setItem(LS_KEY,JSON.stringify(state));}catch(e){storageOK=false;if(!sync.refs)setSync('none');}syncReminder();}
 function idbSet(key,val){try{var rq=indexedDB.open('lifeos-sw',1);rq.onupgradeneeded=function(){try{rq.result.createObjectStore('kv');}catch(e){}};rq.onsuccess=function(){try{var st=rq.result.transaction('kv','readwrite').objectStore('kv'),g=st.get(key);g.onsuccess=function(){val.notifiedDate=(g.result&&g.result.notifiedDate)||'';st.put(val,key);};st.transaction.oncomplete=function(){try{rq.result.close();}catch(e){}};}catch(e){}};}catch(e){}}
-function syncReminder(){try{var g=state.settings,t=todayStr();idbSet('reminder',{remindOn:!!g.notify,remindTime:(shiftOf(t)==='E'?g.remE:g.remM)||'21:00',date:t,minDone:minOK(t)});}catch(e){}}
+function syncReminder(){try{var g=state.settings,t=todayStr(),days={};for(var i=0;i<4;i++){var dd=addDays(t,i);days[dd]={t:(shiftOf(dd)==='E'?g.remE:g.remM)||'21:00',skip:isOff(dd)};}idbSet('reminder',{remindOn:!!g.notify,remindTime:days[t].t,date:t,minDone:minOK(t)||neutral(t),days:days});}catch(e){}}
 function regPeriodic(){try{if(!state.settings.notify||!navigator.serviceWorker)return;navigator.serviceWorker.ready.then(function(reg){if(reg.periodicSync)reg.periodicSync.register('lifeos-daily-check',{minInterval:3600000}).catch(function(){});}).catch(function(){});}catch(e){}}
 function remindPanel(){
   var g=state.settings;
@@ -1132,13 +1448,16 @@ async function pushRemote(){
   try{
     var parts=Object.keys(dirty),bad=false;
     for(var i=0;i<parts.length;i++){
-      var p=parts[i],json=JSON.stringify(pick(p));
+      var p=parts[i],json=JSON.stringify(pick(p)),ts=state.ts[p];
       if(byteLen(json)>600000){bad=true;continue;}
-      await sync.refs[p].set({updated:state.ts[p],json:json});
-      delete dirty[p];
+      await sync.refs[p].set({updated:ts,json:json});
+      seenSet(p,ts);
+      if(state.ts[p]===ts)delete dirty[p];
     }
+    sync.conflicts=0;
     setSync(bad?'big':'synced');
   }catch(e){
+    if(e&&e.conflict&&(sync.conflicts||0)<3){sync.conflicts=(sync.conflicts||0)+1;sync.busy=false;clearTimeout(pushT);pushT=setTimeout(function(){resync();},400);return;}
     ui.syncErr=(e&&e.message)||'';setSync('error');
     if(Object.keys(dirty).length&&!(e&&(e.status===401||e.status===403||e.status===404))){clearTimeout(pushT);pushT=setTimeout(pushRemote,30000);}
   }
@@ -1170,19 +1489,22 @@ async function reconcile(){
   for(var i=0;i<parts.length;i++){
     var p=parts[i],snap=await sync.refs[p].get();
     if(snap.exists){
-      var body=snap.data()||{};
-      if(body.json&&(body.updated||0)>(state.ts[p]||0)){
-        var remote=JSON.parse(body.json),localDirty=!!dirty[p],mine={dm:(function(){var o={};DAYMAPS.forEach(function(k){o[k]=state[k];});return o;})(),dt:state.dayTs||{},log:state.log,periodDone:state.periodDone,tx:(state.money&&state.money.tx)||[]};
+      var body=snap.data()||{},ru=body.updated||0,seen=seenGet()[p];
+      var localDirty=!!dirty[p]||(seen!==undefined&&(state.ts[p]||0)>seen);
+      var remoteNew=seen===undefined?ru>(state.ts[p]||0):ru!==seen;
+      if(body.json&&remoteNew){
+        var remote=JSON.parse(body.json),mine={dm:(function(){var o={};DAYMAPS.forEach(function(k){o[k]=state[k];});return o;})(),dt:state.dayTs||{},log:state.log,periodDone:state.periodDone,tasks:state.tasks,inboxSeen:state.inboxSeen,tx:(state.money&&state.money.tx)||[]};
         if(localDirty)snapshot('merge');
         DOCS[p].forEach(function(k){if(remote[k]!==undefined)state[k]=remote[k];});
         if(localDirty){
-          if(p==='core'){mergeCoreDays(mine,remote);state.periodDone=mergeFlags(state.periodDone,mine.periodDone);}
+          if(p==='core'){mergeCoreDays(mine,remote);state.periodDone=mergeFlags(state.periodDone,mine.periodDone);state.tasks=mergeTasks(mine.tasks,state.tasks);state.inboxSeen=mergeFlags(state.inboxSeen,mine.inboxSeen);}
           if(p==='money'&&state.money){state.money.tx=mergeTx(state.money.tx,mine.tx);}
           state.ts[p]=Date.now();dirty[p]=1;
         }else state.ts[p]=body.updated;
-        rev++;changed=true;continue;
+        seenSet(p,ru);rev++;changed=true;continue;
       }
-      if((state.ts[p]||0)>(body.updated||0))dirty[p]=1;
+      if(localDirty||(state.ts[p]||0)>ru)dirty[p]=1;
+      else if(seen===undefined&&ru===(state.ts[p]||0))seenSet(p,ru);
     }else{
       if(!state.ts[p])state.ts[p]=Date.now();
       dirty[p]=1;
@@ -1190,9 +1512,12 @@ async function reconcile(){
   }
   if(changed){state=normalize(state);persistLocal();safeRender();}
   await pushRemote();
+  await importInbox();
 }
 /* ---- GitHub repo storage (standalone build) ---- */
-var SYNC_KEY='lifeos.sync';
+var SYNC_KEY='lifeos.sync',SEEN_KEY='lifeos.seen';
+function seenGet(){try{return JSON.parse(localStorage.getItem(SEEN_KEY)||'{}')||{};}catch(e){return {};}}
+function seenSet(p,v){try{var o=seenGet();o[p]=v;localStorage.setItem(SEEN_KEY,JSON.stringify(o));}catch(e){}}
 function syncCfg(){try{var c=JSON.parse(localStorage.getItem(SYNC_KEY)||'null');return (c&&c.repo&&c.token)?c:null;}catch(e){return null;}}
 function saveCfg(c){try{if(c)localStorage.setItem(SYNC_KEY,JSON.stringify(c));else localStorage.removeItem(SYNC_KEY);}catch(e){}}
 function ghHeaders(cfg,json){
@@ -1229,7 +1554,8 @@ function repoRefs(cfg){
           if(shas[p])body.sha=shas[p];
           var res=await fetch(url,{method:'PUT',headers:ghHeaders(cfg,true),body:JSON.stringify(body)});
           if(res.ok){var j=await res.json();shas[p]=(j.content&&j.content.sha)||null;return;}
-          if((res.status===409||res.status===422)&&attempt===0){
+          if(res.status===409){var ce=ghError(res);ce.conflict=true;throw ce;}
+          if(res.status===422&&attempt===0){
             var r2=await fetch(url,{headers:ghHeaders(cfg),cache:'no-store'});
             shas[p]=r2.ok?(await r2.json()).sha:null;
             continue;
@@ -1618,9 +1944,13 @@ function wheelLabel(key){
 
 /* ================= views: today ================= */
 function habitStreak(hid){
-  var t=todayStr(),d=t,n=0;
+  var t=todayStr(),d=t,n=0,g=0,h=state.habits.find(function(x){return x.id===hid;});
+  function na(x){var sh=shiftOf(x);return isOff(x)||!!(h&&h.sh&&sh&&sh!=='O'&&sh!==h.sh);}
   if(!isDone(hid,d))d=addDays(t,-1);
-  while(n<400&&isDone(hid,d)){n++;d=addDays(d,-1);}
+  while(n<400&&g++<900){
+    if(isDone(hid,d)){n++;}else if(!na(d)){break;}
+    d=addDays(d,-1);
+  }
   return n;
 }
 function weekdayBars(){
@@ -1640,23 +1970,77 @@ function weekdayBars(){
   if(!any)return '';
   return '<div class="panel"><h3>Average by weekday</h3><p class="hint" style="margin-bottom:8px">Last 12 weeks. It shows which days your system holds up and which need a plan.</p>'+barsHTML(items)+'</div>';
 }
+function dayTypeBars(){
+  var c=state.settings.cycle;if(!c)return weekdayBars();
+  var t=todayStr(),sum={M:0,E:0,O:0},cnt={M:0,E:0,O:0},started=false,i;
+  for(i=83;i>=0;i--){
+    var d=addDays(t,-i),st=dayStats(d);
+    if(st.done>0)started=true;
+    if(!started||!st.total||isOff(d))continue;
+    var k=shiftOf(d);if(!cnt.hasOwnProperty(k))continue;
+    sum[k]+=st.pct;cnt[k]++;
+  }
+  var names={M:'Morning days',E:'Night days',O:'Days off'},items=[],any=false;
+  ['M','E','O'].forEach(function(k){var p=cnt[k]?Math.round(sum[k]/cnt[k]):0;if(cnt[k])any=true;items.push({l:names[k],c:'--accent',p:p,v:p+'% ('+cnt[k]+' d)'});});
+  if(!any)return '';
+  return '<div class="panel"><h3>Average by day type</h3><p class="hint" style="margin-bottom:8px">Last 12 weeks. Your shift cycle is 12 days, so calendar weekdays tell you little. This shows which day type needs a better plan.</p>'+barsHTML(items)+'</div>';
+}
+function blockHealth(){
+  var t=todayStr(),rs=rangeStats(addDays(t,-13),t);
+  if(rs.logged<7)return '';
+  var rows=[];
+  state.habits.forEach(function(h){
+    if(!h.on||(h.freq||'daily')!=='daily'||h.nd)return;
+    var q=rs.per[h.id];if(!q||q.total<7)return;
+    var pct=Math.round(q.done*100/q.total);if(pct<50)rows.push({h:h,pct:pct});
+  });
+  if(!rows.length)return '';
+  rows.sort(function(a,b){return a.pct-b.pct;});
+  return '<div class="panel"><h3>Blocks to reconsider</h3><p class="hint" style="margin-bottom:8px">Finished less than half the time over the last 14 days. A block like that is usually too big, in the wrong place, or only needed sometimes.</p>'+
+    rows.slice(0,4).map(function(r){
+      return '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 0;border-top:1px solid var(--line)"><span style="flex:1 1 140px"><b>'+esc(r.h.n)+'</b> <span class="hint">'+r.pct+'%</span></span>'+
+        '<button class="sm" data-act="hnd" data-h="'+r.h.id+'">Needed sometimes</button><button class="sm" data-act="harch" data-h="'+r.h.id+'">Archive</button></div>';
+    }).join('')+'</div>';
+}
 function streakRank(){
   var arr=activeHabits().map(function(h){return {n:h.n,s:habitStreak(h.id)};}).filter(function(x){return x.s>0;}).sort(function(a,b){return b.s-a.s;}).slice(0,5);
   return '<div class="rank"><h4>Running streaks</h4>'+(arr.map(function(x){return '<div><span>'+esc(x.n)+'</span><b>'+x.s+' d</b></div>';}).join('')||'<span class="hint">No streaks yet.</span>')+'</div>';
 }
 function cntRow(h,d,xc,on,tg){
   var c=cntOf(h.id,d);
-  return '<div style="display:flex;gap:6px;align-items:stretch"><button class="row'+(on?' on':'')+(xc||'')+'" style="flex:1" data-act="cinc" data-h="'+h.id+'"><span class="box">'+CHECK+'</span><span class="hn">'+esc(h.n)+' <small>'+c+' / '+tg+'</small></span>'+(h.min?'<span class="mb"></span>':'')+'</button><button class="sm" data-act="cdec" data-h="'+h.id+'" aria-label="Minus">-</button></div>';
+  return '<div style="display:flex;gap:6px;align-items:stretch"><button class="row'+(on?' on':'')+(xc||'')+'" style="flex:1" data-act="cinc" data-h="'+h.id+'"><span class="box">'+CHECK+'</span><span class="hn">'+esc(h.n)+' <small>'+c+' / '+tg+'</small>'+itHTML(h,ui.minOnly)+'</span>'+(h.min?'<span class="mb"></span>':'')+'</button><button class="sm" data-act="cdec" data-h="'+h.id+'" aria-label="Minus">-</button></div>';
 }
 function rowHTML(h,d,xc){
   var on=isDone(h.id,d),tg=h.tg||0;
   if(tg>0)return cntRow(h,d,xc,on,tg);
-  return '<button class="row'+(on?' on':'')+(xc||'')+'" data-act="toggle" data-h="'+h.id+'" role="checkbox" aria-checked="'+on+'"><span class="box">'+CHECK+'</span><span class="hn">'+esc(h.n)+'</span>'+(h.min?'<span class="mb" title="Part of the minimum day"></span>':'')+'</button>';
+  if(h.it&&h.it.length){
+    var bits=itBits(h,d),nT=bits.split('1').length-1,tot=h.it.length,open=!!(ui.open&&ui.open[h.id]);
+    var chip=(nT>0&&nT<tot)?'<span class="bxn">'+nT+'/'+tot+'</span>':'';
+    return '<div class="row blk'+(on?' on':'')+(xc||'')+'"><button class="box" data-act="toggle" data-h="'+h.id+'" role="checkbox" aria-checked="'+on+'" aria-label="Mark '+esc(h.n)+' done">'+CHECK+'</button>'+
+      '<button class="hn bxmain" data-act="bx" data-h="'+h.id+'" aria-expanded="'+open+'">'+esc(h.n)+chip+(open?'':itShort(h))+'</button>'+focusTag(h,d)+(h.min?'<span class="mb" title="Part of the minimum day"></span>':'')+'</div>'+
+      (open?'<div class="ilist">'+itemsList(h,d,'',false)+'</div>':'');
+  }
+  return '<button class="row'+(on?' on':'')+(xc||'')+'" data-act="toggle" data-h="'+h.id+'" role="checkbox" aria-checked="'+on+'"><span class="box">'+CHECK+'</span><span class="hn">'+esc(h.n)+itHTML(h,ui.minOnly)+'</span>'+focusTag(h,d)+(h.min?'<span class="mb" title="Part of the minimum day"></span>':'')+'</button>';
 }
 function periodPanelLabel(freq){return {weekly:'Weekly habits',monthly:'Monthly habits',quarterly:'Quarterly habits',yearly:'Yearly habits'}[freq]||'';}
 function periodRowHTML(h,d){
   var on=isPeriodDone(h,d);
-  return '<button class="row'+(on?' on':'')+'" data-act="ptoggle" data-h="'+h.id+'" role="checkbox" aria-checked="'+on+'"><span class="box">'+CHECK+'</span><span class="hn">'+esc(h.n)+'</span></button>';
+  if(h.it&&h.it.length){
+    var bits=itBits(h,d),nT=bits.split('1').length-1,tot=h.it.length,open=!!(ui.open&&ui.open[h.id]);
+    var chip=(nT>0&&nT<tot)?'<span class="bxn">'+nT+'/'+tot+'</span>':'';
+    return '<div class="row blk'+(on?' on':'')+'"><button class="box" data-act="ptoggle" data-h="'+h.id+'" role="checkbox" aria-checked="'+on+'" aria-label="Mark '+esc(h.n)+' done">'+CHECK+'</button>'+
+      '<button class="hn bxmain" data-act="bx" data-h="'+h.id+'" aria-expanded="'+open+'">'+esc(h.n)+chip+(open?'':itShort(h))+'</button></div>'+
+      (open?'<div class="ilist">'+itemsList(h,d,'',false)+'</div>':'');
+  }
+  return '<button class="row'+(on?' on':'')+'" data-act="ptoggle" data-h="'+h.id+'" role="checkbox" aria-checked="'+on+'"><span class="box">'+CHECK+'</span><span class="hn">'+esc(h.n)+itHTML(h,false)+'</span></button>';
+}
+function needPanel(d){
+  var sh=shiftOf(d),hs=state.habits.filter(function(h){return h.on&&h.nd&&(h.freq||'daily')==='daily'&&(!h.sh||!sh||sh==='O'||h.sh===sh);});
+  if(!hs.length)return '';
+  var folded=ui.fold.need!==false,done=hs.filter(function(h){return isDone(h.id,d);}).length;
+  return '<section class="line'+(folded?' folded':'')+'" style="--c:var(--accent)">'+
+    '<button class="linehead" data-act="fold" data-s="need" aria-expanded="'+(!folded)+'"><span class="lname">As needed</span><span class="lcount">'+(done?done+' done today':'Not counted')+'</span>'+icon('chev')+'</button>'+
+    (folded?'':'<ol class="stops">'+hs.map(function(h){return '<li>'+rowHTML(h,d,'')+'</li>';}).join('')+'</ol>')+'</section>';
 }
 function periodPanel(freq,d){
   var hs=periodHabits(freq);
@@ -1690,17 +2074,130 @@ function prayerTimes(date,lat,lng){
 }
 function prayerNow(){var l=state.settings.loc;if(!l||l.length!==2)return null;try{var t=prayerTimes(new Date(),l[0],l[1]);return isNaN(t.fajr+t.isha)?null:t;}catch(e){return null;}}
 function hm(min){return pad(Math.floor(min/60))+':'+pad(min%60);}
-var HABIT_WINDOWS={'Morning Adhkar':['fajr','sunrise'],'Evening Adhkar':['asr','maghrib']};
+var HABIT_WINDOWS={'Wake & Dawn':['fajr','sunrise'],'Prayers & Adhkar':['asr','maghrib']};
 function windowOpen(h,pt,mins){var w=HABIT_WINDOWS[h.n];return !!(w&&pt&&mins>=pt[w[0]]&&mins<pt[w[1]]);}
+/* ================= day type, next action, bottleneck, experiments ================= */
+var KINDS={
+ M:{name:'Morning shift day',short:'morning-shift',text:'Work is the anchor today. Do the essentials around the shift and sleep on time.',focus:['Wake & Dawn','Deep Work','Prayers & Adhkar','Close the Day'],light:[]},
+ E:{name:'Night shift day',short:'night-shift',text:'Sleep B comes first, then work. Keep the rest of the day light.',focus:['Prayers & Adhkar','Deep Work','Close the Day'],light:['Learning','Training & Movement']},
+ O:{name:'Day off',short:'day-off',text:'This is the day for training, deeper learning and time with family.',focus:['Training & Movement','Learning','Relationships','Quran & Gratitude'],light:[]},
+ T:{name:'Shift change day',short:'shift-change',text:'Follow the sleep transition steps below and keep everything else light.',focus:['Prayers & Adhkar','Close the Day','Relationships'],light:['Learning','Training & Movement']}
+};
+function dayKind(d){
+  var sh=shiftOf(d);if(!sh)return null;
+  var ci=cycleIdx(d);
+  if(sh==='O'&&!(state.shifts&&state.shifts[d])&&(ci===4||ci===10))return 'T';
+  return KINDS[sh]?sh:null;
+}
+function focusSet(d){var k=dayKind(d),o={};if(k)KINDS[k].focus.forEach(function(n){o[n]=1;});return o;}
+function focusTag(h,d){return focusSet(d)[h.n]?'<span class="ftag">Focus</span>':'';}
+function weakBlock(a,b){
+  var rs=rangeStats(a,b);if(rs.logged<2)return null;
+  var best=null;
+  state.habits.forEach(function(h){
+    if(!h.on||(h.freq||'daily')!=='daily')return;
+    var p=rs.per[h.id];if(!p||p.total<2)return;
+    var pct=Math.round(p.done*100/p.total);
+    if(!best||pct<best.pct)best={h:h,pct:pct};
+  });
+  return best;
+}
+var bnCache=null;
+function bottleneck(){
+  var t=todayStr(),key=rev+'|'+t;
+  if(bnCache&&bnCache.k===key)return bnCache.v;
+  var cur=periodOf('w',t),prev=periodOf('w',addDays(cur.start,-1)),v=weakBlock(prev.start,prev.end);
+  if(v)v.prev=prev;
+  bnCache={k:key,v:v};return v;
+}
+function weekChange(){
+  var cur=periodOf('w',todayStr()),prev=periodOf('w',addDays(cur.start,-1)),r=state.reviews[prev.key];
+  return (r&&r.t&&String(r.t.chg||'').trim())||'';
+}
+function weakLine(P){
+  var wb=weakBlock(P.start,P.end);if(!wb)return '';
+  return '<p class="hint" style="margin-top:12px">Weakest block this week: <b style="color:var(--ink)">'+esc(wb.h.n)+'</b> ('+wb.pct+'%). Think about it when you choose the one change below.</p>';
+}
 function nextHabit(d){
-  var all=activeHabits(d);
-  if(d===todayStr()){var pt=prayerNow();if(pt){var nw=new Date(),mins=nw.getHours()*60+nw.getMinutes();
-    var hit=all.find(function(h){return windowOpen(h,pt,mins)&&!isDone(h.id,d)&&(!ui.minOnly||h.min);});if(hit)return hit;}}
-  for(var i=0;i<SECTIONS.length;i++){
-    var hs=all.filter(function(h){return h.s===SECTIONS[i].id&&(!ui.minOnly||h.min);});
-    for(var j=0;j<hs.length;j++){if(!isDone(hs[j].id,d))return hs[j];}
+  var all=activeHabits(d).filter(function(h){return (!ui.minOnly||h.min)&&!isDone(h.id,d);});
+  if(!all.length)return null;
+  var isT=d===todayStr(),pt=isT?prayerNow():null,nw=new Date(),mins=nw.getHours()*60+nw.getMinutes(),fs=focusSet(d),bn=isT?bottleneck():null;
+  function key(h){
+    var si=0;for(var q=0;q<SECTIONS.length;q++){if(SECTIONS[q].id===h.s){si=q;break;}}
+    return [(pt&&windowOpen(h,pt,mins))?0:1,(fs[h.n]||(bn&&bn.h.id===h.id))?0:1,si,all.indexOf(h)];
   }
-  return null;
+  var ks=all.map(function(h){return {h:h,k:key(h)};});
+  ks.sort(function(a,b){for(var i=0;i<4;i++){if(a.k[i]!==b.k[i])return a.k[i]-b.k[i];}return 0;});
+  return ks[0].h;
+}
+function nextWhy(h,d){
+  var isT=d===todayStr(),pt=isT?prayerNow():null,nw=new Date(),mins=nw.getHours()*60+nw.getMinutes();
+  if(pt&&windowOpen(h,pt,mins)){var w=HABIT_WINDOWS[h.n];return 'Why: its prayer window is open now ('+hm(pt[w[0]])+' to '+hm(pt[w[1]])+').';}
+  var bn=isT?bottleneck():null;
+  if(bn&&bn.h.id===h.id)return 'Why: it was your weakest block last week ('+bn.pct+'%), so it comes first.';
+  var k=dayKind(d);
+  if(k&&focusSet(d)[h.n])return 'Why: it is one of the focus blocks for a '+KINDS[k].short+' day.';
+  if(ui.minOnly&&h.min)return 'Why: you are on the minimum day and this is one of its essentials.';
+  return 'Why: it is the next open block in the day\u2019s order.';
+}
+function openBtn(h){
+  if(h.n==='Training & Movement')return '<button class="btn sm2 nx-open" data-act="goto" data-tab="train" data-sub="log">Open training</button>';
+  if(h.n==='Deep Work')return '<button class="btn sm2 nx-open" data-act="goto" data-tab="focus">Start a focus session</button>';
+  return '';
+}
+function stratHTML(d){
+  var k=dayKind(d),isT=d===todayStr(),out='';
+  if(k){var K=KINDS[k];
+    out+='<h3>'+esc(K.name)+'</h3><p>'+esc(K.text)+'</p><p><b>Focus:</b> '+K.focus.map(esc).join(', ')+'.'+(K.light.length?' <b>Keep light:</b> '+K.light.map(esc).join(', ')+'.':'')+'</p>';}
+  if(isT){
+    var bn=bottleneck();
+    if(bn){var ch=weekChange();out+='<p><b>Bottleneck this week:</b> '+esc(bn.h.n)+' ('+bn.pct+'% last week).'+(ch?' <b>Change to try:</b> '+esc(ch):' Write the one change in the weekly review.')+'</p>';}
+    var x=activeExp();
+    if(x){var day=Math.round((parseD(d)-parseD(x.start))/86400000)+1;
+      out+='<p><b>Experiment:</b> '+esc(x.t)+' ('+(d>x.end?'finished, decide in Plan':(day<1?'starts '+esc(fmtDay(x.start)):'day '+day+' of '+x.days))+').</p>';}
+  }
+  return out?'<div class="strat">'+out+'</div>':'';
+}
+/* ---- experiments: one at a time, judged from data the app already has ---- */
+var EXP_M={sleep:'average sleep hours',mood:'average mood',focus:'focus minutes per day',done:'daily completion',train:'workouts per week'};
+function activeExp(){return (state.experiments||[]).find(function(e){return !e.done;})||null;}
+function expAvg(m,a,b){
+  var t=todayStr(),end=b<t?b:t,d=a,vals=[],g=0,days=0;
+  while(d<=end&&g++<200){
+    days++;
+    if(m==='sleep'){var sl=bodyOf(d).sl;if(sl>0)vals.push(+sl);}
+    else if(m==='mood'){var mo=state.mood[d];if(mo>0)vals.push(+mo);}
+    else if(m==='focus'){vals.push(((state.focus[d]||{}).m)||0);}
+    else if(m==='done'){if(!neutral(d)){var st=dayStats(d);if(st.total)vals.push(st.pct);}}
+    d=addDays(d,1);
+  }
+  if(m==='train'){var c=trainedDates(a,end).length;return {v:days?c*7/days:0,n:days};}
+  return {v:avg(vals),n:vals.length};
+}
+function expFmt(m,v){return fmt(v)+(m==='done'?'%':'');}
+function expResult(x){
+  var b=expAvg(x.m,addDays(x.start,-x.days),addDays(x.start,-1)),u=expAvg(x.m,x.start,x.end);
+  if(b.n<3||u.n<3)return 'Not enough logged days to compare the two periods. Decide by how it felt.';
+  return 'Before: <b>'+expFmt(x.m,b.v)+'</b>. During: <b>'+expFmt(x.m,u.v)+'</b>. This compares two periods. It does not prove the cause.';
+}
+function expPanel(){
+  var x=activeExp(),t=todayStr(),h='<div class="panel exp"><h3>Experiment</h3>';
+  if(x){
+    var day=Math.round((parseD(t)-parseD(x.start))/86400000)+1,over=t>x.end;
+    h+='<p><b>'+esc(x.t)+'</b></p><p class="hint">Judged by '+EXP_M[x.m]+'. '+(over?'The period is over.':'Day '+Math.max(day,1)+' of '+x.days+'.')+'</p>';
+    h+='<div class="meter" style="margin:10px 0"><i style="width:'+Math.max(0,Math.min(100,Math.round(day*100/x.days)))+'%"></i></div>';
+    if(over)h+='<p>'+expResult(x)+'</p><div class="btns"><button class="btn pri" data-act="expend" data-v="yes">Keep it</button><button class="btn" data-act="expend" data-v="no">Drop it</button></div>';
+    else h+='<div class="btns"><button class="btn sm2 dng" data-act="expdel">Cancel experiment</button></div>';
+  }else{
+    h+='<p class="hint">Test one change at a time, for a fixed number of days. The app compares the period with the same number of days before it.</p>'+
+      '<label class="lbl"><span>What will you change?</span><input class="inp" id="expTitle" placeholder="For example: sleep 7.5 hours" aria-label="Experiment"></label>'+
+      '<div class="grid2"><label class="lbl"><span>Judged by</span><select class="inp" id="expMetric">'+Object.keys(EXP_M).map(function(k){return '<option value="'+k+'">'+esc(EXP_M[k])+'</option>';}).join('')+'</select></label>'+
+      '<label class="lbl"><span>Days</span><input class="inp" id="expDays" type="number" inputmode="numeric" min="3" max="60" value="14"></label></div>'+
+      '<div class="btns"><button class="btn pri" data-act="expadd">Start today</button></div>';
+  }
+  var done=(state.experiments||[]).filter(function(e){return e.done;}).slice(-5).reverse();
+  if(done.length)h+='<div style="margin-top:14px">'+done.map(function(e){return '<p class="hint">'+esc(e.t)+': '+(e.keep==='yes'?'kept':'dropped')+' ('+esc(fmtDay(e.start))+' to '+esc(fmtDay(e.end))+')</p>';}).join('')+'</div>';
+  return h+'</div>';
 }
 function weekStrip(d){
   var t=todayStr(),ws=weekStart(d),out='';
@@ -1717,7 +2214,7 @@ function heroHTML(d){
     return '<div class="next all" style="--c:var(--good)"><div class="nx-body"><span class="nx-k">'+(ui.minOnly?'All essentials checked':'Every habit is checked')+'</span><strong class="nx-name">'+(isT?'Nice work. Close the day with a reflection.':'This day is complete.')+'</strong>'+(sk.cur>0?'<span class="nx-meta">Minimum-day streak: '+sk.cur+' day'+(sk.cur===1?'':'s')+'</span>':'')+'</div></div>';
   }
   var sec=SEC[nx.s],sh=activeHabits(d).filter(function(h){return h.s===nx.s;}),sd=sh.filter(function(h){return isDone(h.id,d);}).length;
-  return '<div class="next" style="--c:var('+sec.c+')"><div class="nx-body"><span class="nx-k">'+(isT?'Up next in ':'Still open in ')+esc(sec.name)+'</span><strong class="nx-name">'+esc(nx.n)+'</strong><span class="nx-meta">'+sd+' of '+sh.length+' done in this section'+(nx.min?'. Part of your minimum day.':'')+'</span></div>'+
+  return '<div class="next" style="--c:var('+sec.c+')"><div class="nx-body"><span class="nx-k">'+(isT?'Up next in ':'Still open in ')+esc(sec.name)+'</span><strong class="nx-name">'+esc(nx.n)+'</strong>'+(nx.it&&nx.it.length?'<span class="nx-start">Start with: <b>'+esc(stripStar(nx.it[(function(){var bb=itBits(nx,d),c=itNeed(nx),k;for(k=0;k<c.length;k++){if(bb.charAt(c[k])!=='1')return c[k];}return c[0];})()]))+'</b></span><div class="nx-items">'+itemsList(nx,d,'',ui.minOnly&&nx.min)+'</div>':'')+'<span class="nx-meta">'+(sh.length>1?sd+' of '+sh.length+' done in this section':'')+(nx.min?(sh.length>1?'<br>':'')+'Part of your minimum day.':'')+'</span><span class="nx-why">'+esc(nextWhy(nx,d))+'</span>'+openBtn(nx)+'</div>'+
     '<button class="nx-do" data-act="toggle" data-h="'+nx.id+'" aria-label="Mark '+esc(nx.n)+' done">'+CHECK+'</button></div>';
 }
 function dayCtl(d){
@@ -1754,17 +2251,20 @@ function viewToday(){
   var anyFold=SECTIONS.some(function(s){return ui.fold[s.id];})||['weekly','monthly','quarterly','yearly'].some(function(fq){return ui.fold['freq_'+fq];});
   var prio='<div class="prio"><h3>Top 3 priorities</h3>'+[1,2,3].map(function(n){
     return '<label class="prow"><span class="pn">'+n+'</span><input class="pin" data-note="p'+n+'" value="'+esc(notes['p'+n]||'')+'" placeholder="'+(n===1?'The one thing that matters most':'Priority '+n)+'" aria-label="Priority '+n+'"></label>';
-  }).join('')+'</div>';
+  }).join('')+prioSug(d,notes)+'</div>';
   var cbMsg=ui.cb==='sleep'?'Short sleep last night, so today starts with the essentials only. Sleep comes before extra productivity.':'Yesterday\u2019s essentials were missed, so today starts with the minimum. One bad day does not become a bad week.';
   var cbBanner=(isT&&ui.cb&&ui.minOnly&&!okm)?'<div class="nudge"><span>'+cbMsg+'</span><button class="btn sm2 pri" data-act="cbfull">Do a full day</button></div>':'';
   var gs=state.settings,hhmm=pad(new Date().getHours())+':'+pad(new Date().getMinutes()),rt=(shiftOf(d)==='E'?gs.remE:gs.remM)||'21:00';
-  var remBanner=(isT&&gs.notify&&hhmm>=rt&&!minOK(d)&&!ui.cb)?'<div class="nudge"><span>Reminder: today\u2019s essentials are not checked off yet.</span><button class="btn sm2 pri" data-act="minonly">'+(ui.minOnly?'Show all':'Minimum day')+'</button></div>':'';
+  var remBanner=(isT&&gs.notify&&hhmm>=rt&&!minOK(d)&&!neutral(d)&&!ui.cb)?'<div class="nudge"><span>Reminder: today\u2019s essentials are not checked off yet.</span><button class="btn sm2 pri" data-act="minonly">'+(ui.minOnly?'Show all':'Minimum day')+'</button></div>':'';
+  var wkNudge='',ci=cycleIdx(d);
+  if(isT&&ci>=0&&ci%6===5){var wr=state.reviews[periodOf('w',d).key],wf=!!(wr&&wr.t&&Object.keys(wr.t).some(function(k){return String(wr.t[k]||'').trim();}));
+    if(!wf)wkNudge='<div class="nudge"><span>Today closes your 6-day week. Take 20 minutes for the weekly review.</span><button class="btn sm2 pri" data-act="goreview">Open review</button></div>';}
   var tmw=state.notes[addDays(d,1)]||{};
   var plan=isT?'<details class="prio"'+(new Date().getHours()>=18?' open':'')+'><summary><b>Plan tomorrow</b> <span class="hint">top 3 for '+esc(fmtDay(addDays(d,1)))+'</span></summary>'+[1,2,3].map(function(n){
     return '<label class="prow"><span class="pn">'+n+'</span><input class="pin" data-notet="p'+n+'" value="'+esc(tmw['p'+n]||'')+'" placeholder="'+(n===1?'The one thing that matters most':'Priority '+n)+'" aria-label="Tomorrow priority '+n+'"></label>';
   }).join('')+'</details>':'';
-  var recur=ui.minOnly?'':['weekly','monthly','quarterly','yearly'].map(function(fq){return periodPanel(fq,d);}).join('');
-  return nudge+cbBanner+remBanner+heroHTML(d)+sleepCardHTML(d)+
+  var recur=ui.minOnly?'':needPanel(d)+['weekly','monthly','quarterly','yearly'].map(function(fq){return periodPanel(fq,d);}).join('');
+  return nudge+cbBanner+remBanner+wkNudge+heroHTML(d)+stratHTML(d)+tasksPanel(d)+sleepCardHTML(d)+
     '<p class="rule">Rule of the day: <b>'+esc(state.rules[doy%state.rules.length]||'')+'</b></p>'+
     weekStrip(d)+dayCtl(d)+prio+plan+tiles+
     '<div class="toolbar"><button class="toggle'+(okm?' ok':'')+'" data-act="minonly" aria-pressed="'+ui.minOnly+'">Minimum day'+(mn.length?' '+mdone+' of '+mn.length:'')+'</button>'+
@@ -2112,7 +2612,7 @@ function viewPlan(){
   return '<div class="panel" style="margin-top:12px"><h3>Goals</h3><div class="addf"><input class="inp" id="gTitle" placeholder="New goal, for example: Squat 100 kg" aria-label="Goal title"><select class="inp" id="gArea" aria-label="Area">'+SECTIONS.map(function(s){return '<option value="'+s.id+'">'+esc(s.name)+'</option>';}).join('')+'</select><input class="inp" id="gDue" type="date" aria-label="Due date"></div>'+
     '<div class="addf" style="grid-template-columns:1fr auto"><input class="inp" id="gWhy" placeholder="Why does it matter? (optional)" aria-label="Why"><button class="btn pri" data-act="gadd">Add goal</button></div>'+
     (gh||'<div class="empty" style="margin-top:12px">No goals yet. Add your 90-day goals here and break them into steps.</div>')+'</div>'+
-    '<div class="panel"><h3>Personal rules</h3><div class="today-rule"><div class="hint" style="color:inherit;opacity:.7">Rule of the day</div><div class="en">'+esc(state.rules[doy%state.rules.length]||'')+'</div></div>'+
+    tasksPlanPanel()+expPanel()+'<div class="panel"><h3>Personal rules</h3><div class="today-rule"><div class="hint" style="color:inherit;opacity:.7">Rule of the day</div><div class="en">'+esc(state.rules[doy%state.rules.length]||'')+'</div></div>'+
     state.rules.map(function(x,ri){return '<div class="pli"><div class="pli-top" style="grid-template-columns:1fr auto auto"><input class="inp" data-rule="'+ri+'" value="'+esc(x)+'" aria-label="Rule '+(ri+1)+'"><button class="sm mv" data-act="rulemove" data-i="'+ri+'" aria-label="Move up">\u2191</button><button class="rm" data-act="rulerm" data-i="'+ri+'" aria-label="Remove">\u00D7</button></div></div>';}).join('')+
     '<div class="addf" style="grid-template-columns:1fr auto;margin-top:10px"><input class="inp" id="newRule" placeholder="Add a rule" aria-label="New rule"><button class="btn pri" data-act="ruleadd">Add</button></div></div>'+
     '<div class="panel"><h3>Minimum day</h3><p class="hint" style="margin-bottom:8px">On a bad day, do these and the day still counts.</p><div class="minbox" style="--c:var(--c-body)">'+(mn.length?mn.map(function(h){return rowHTML(h,ui.date);}).join(''):'<p class="hint" style="padding:12px 0">Mark habits as minimum day in Settings.</p>')+'</div></div>';
@@ -2203,15 +2703,16 @@ function viewMoney(){
 }
 
 /* ================= views: reviews and stats ================= */
+function cycleWeek(anchor){var c=state.settings&&state.settings.cycle;if(!c)return null;var n=Math.round((parseD(anchor)-parseD(c))/86400000),st=addDays(c,Math.floor(n/6)*6);return {start:st,end:addDays(st,5)};}
 function periodOf(type,anchor){
-  if(type==='w'){var st=weekStart(anchor),en=addDays(st,6);return {key:'w:'+st,start:st,end:en,label:fmtDay(st)+' to '+fmtDay(en)};}
+  if(type==='w'){var cw=cycleWeek(anchor),st=cw?cw.start:weekStart(anchor),en=cw?cw.end:addDays(st,6);return {key:'w:'+st,start:st,end:en,label:fmtDay(st)+' to '+fmtDay(en)};}
   if(type==='m'){var mk=anchor.slice(0,7),y=+mk.slice(0,4),m=+mk.slice(5,7);return {key:'m:'+mk,start:mk+'-01',end:mk+'-'+pad(daysInMonth(mk)),label:MONTHS[m-1]+' '+y};}
   if(type==='y'){var yy=anchor.slice(0,4);return {key:'y:'+yy,start:yy+'-01-01',end:yy+'-12-31',label:yy};}
   var a=anchor.split('-').map(Number),q=Math.floor((a[1]-1)/3),sm=q*3+1,emk=a[0]+'-'+pad(sm+2);
   return {key:'q:'+a[0]+'-Q'+(q+1),start:a[0]+'-'+pad(sm)+'-01',end:emk+'-'+pad(daysInMonth(emk)),label:'Q'+(q+1)+' '+a[0]};
 }
 function shiftAnchor(type,anchor,dir){
-  if(type==='w')return addDays(anchor,7*dir);
+  if(type==='w')return addDays(anchor,(cycleWeek(anchor)?6:7)*dir);
   if(type==='m')return addMonths(anchor.slice(0,7),dir)+'-01';
   if(type==='y')return (+anchor.slice(0,4)+dir)+'-01-01';
   return addMonths(anchor.slice(0,7),3*dir)+'-01';
@@ -2253,7 +2754,7 @@ function viewReviews(){
     '<button class="btn" data-act="revnow">Current</button></div>'+
     '<div class="ctx"><div><strong>'+rs.pct+'%</strong><div class="hint">Habit completion this period</div></div>'+
       '<div style="flex:1;min-width:160px"><div class="hint">Review filled in: '+dn+' of '+tot+'</div><div class="meter" role="progressbar" aria-valuenow="'+pr+'" aria-valuemin="0" aria-valuemax="100"><i style="width:'+pr+'%"></i></div></div></div>'+
-    '<div class="facts">'+facts.join('')+'</div>'+secBars+groups;
+    '<div class="facts">'+facts.join('')+'</div>'+secBars+(type==='w'?weakLine(P):'')+groups;
 }
 
 /* ================= views: stats ================= */
@@ -2271,11 +2772,12 @@ function insights(mo,wk,pfW){
   if(mv.length>=3)out.push('Average mood over the last '+mv.length+' logged days: <b>'+fmt(avg(mv))+' / 5</b>.');
   if(pfW.focus)out.push('Focus time in the last 7 days: <b>'+pfW.focus+' min</b>.');
   var st=streaks();if(st.cur>0)out.push('Minimum-day streak: <b>'+st.cur+'</b> day'+(st.cur===1?'':'s')+'. Never let one bad day become a bad week.');
+  var bn=bottleneck();if(bn)out.push('Weakest block last week: <b>'+esc(bn.h.n)+'</b> ('+bn.pct+'%).');
   return out;
 }
 function viewStats(){
-  var t=todayStr(),ws=weekStart(t);
-  var wk=rangeStats(ws,addDays(ws,6)),mo=rangeStats(t.slice(0,7)+'-01',t),qp=periodOf('q',t),qq=rangeStats(qp.start,qp.end),yr=rangeStats(t.slice(0,4)+'-01-01',t),st=streaks(),tdy=dayStats(t);
+  var t=todayStr(),wp=periodOf('w',t);
+  var wk=rangeStats(wp.start,wp.end),mo=rangeStats(t.slice(0,7)+'-01',t),qp=periodOf('q',t),qq=rangeStats(qp.start,qp.end),yr=rangeStats(t.slice(0,4)+'-01-01',t),st=streaks(),tdy=dayStats(t);
   var pw=periodFacts(addDays(t,-6),t),pm=periodFacts(t.slice(0,7)+'-01',t);
   var anyLogged=yr.logged>0||pm.workouts>0;
   var vals=[];for(var i=29;i>=0;i--)vals.push(dayStats(addDays(t,-i)).pct);
@@ -2301,7 +2803,7 @@ function viewStats(){
     '<div class="kpis">'+trainKp+'</div>'+
     (ins.length?'<div class="panel"><h3>Insights</h3><ul class="insights">'+ins.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul></div>':'')+
     '<div class="panel"><h3>Last 30 days</h3><div class="chart">'+lineChart(vals,[fmtDay(addDays(t,-29)),fmtDay(t)],{min:0,max:100,aria:'Daily completion'})+'</div></div>'+
-    '<div class="panel"><h3>Consistency, last 12 weeks</h3><div class="chart" style="overflow-x:auto">'+heatmap()+'</div></div>'+weekdayBars()+
+    '<div class="panel"><h3>Consistency, last 12 weeks</h3><div class="chart" style="overflow-x:auto">'+heatmap()+'</div></div>'+dayTypeBars()+blockHealth()+
     '<div class="panel"><h3>Sections this month</h3>'+bars+'</div>'+
     '<div class="panel grid3"><div class="rank"><h4>Strongest habits this month</h4>'+rk(top)+'</div><div class="rank"><h4>Weakest habits this month</h4>'+rk(low)+'</div>'+streakRank()+'</div>'+
     '<div class="panel"><h3>Wheel of life</h3>'+wheelTabs+radarHTML+'</div>';
@@ -2323,8 +2825,8 @@ function setGeneral(){
     '<p class="hint" style="margin-top:6px">Weekly reviews are saved per week. Changing the first day of the week changes which week a review belongs to.</p></div>';
 }
 function setHabits(){
-  var groups=SECTIONS.map(function(sec){
-    var hs=state.habits.filter(function(h){return h.s===sec.id;});
+  function hg(src){return SECTIONS.map(function(sec){
+    var hs=src.filter(function(h){return h.s===sec.id;});
     if(!hs.length)return '';
     return '<section class="sec" style="--c:var('+sec.c+')"><div class="sech"><h3>'+esc(sec.name)+'</h3><span class="cnt">'+hs.filter(function(x){return x.on;}).length+' active</span></div><div class="list">'+
       hs.map(function(h){
@@ -2333,12 +2835,20 @@ function setHabits(){
           '<div class="hact"><select class="inp sel" data-hs="'+h.id+'" aria-label="Section for '+esc(h.n)+'">'+SECTIONS.map(function(x){return '<option value="'+x.id+'"'+(x.id===h.s?' selected':'')+'>'+esc(x.name)+'</option>';}).join('')+'</select>'+
           '<select class="inp sel" data-hf="'+h.id+'" aria-label="Frequency for '+esc(h.n)+'">'+FREQS.map(function(x){return '<option value="'+x[0]+'"'+(x[0]===fr?' selected':'')+'>'+x[1]+'</option>';}).join('')+'</select>'+
           (fr==='daily'?'<select class="inp sel" data-hsh="'+h.id+'" aria-label="Shift for '+esc(h.n)+'"><option value="">Any shift</option><option value="M"'+(h.sh==='M'?' selected':'')+'>Morning shift only</option><option value="E"'+(h.sh==='E'?' selected':'')+'>Night shift only</option></select><input class="inp sel" type="number" min="0" style="width:96px" data-htg="'+h.id+'" value="'+(h.tg||'')+'" placeholder="Count target" aria-label="Count target for '+esc(h.n)+'">':'')+
-          (fr==='daily'?'<button class="sm" data-act="hmin" data-h="'+h.id+'" aria-pressed="'+h.min+'" title="Part of the minimum day">Minimum day</button>':'')+
+          (fr==='daily'?'<button class="sm" data-act="hmin" data-h="'+h.id+'" aria-pressed="'+h.min+'" title="Part of the minimum day">Minimum day</button><button class="sm" data-act="hnd" data-h="'+h.id+'" aria-pressed="'+!!h.nd+'" title="Not counted in the daily percentage">As needed</button>':'')+
           '<button class="sm" data-act="hmove" data-h="'+h.id+'" aria-label="Move up">\u2191</button>'+
           '<button class="sm" data-act="hdown" data-h="'+h.id+'" aria-label="Move down">\u2193</button>'+
-          '<button class="sm" data-act="'+(h.on?'harch':'hrest')+'" data-h="'+h.id+'">'+(h.on?'Archive':'Restore')+'</button></div></div>';
+          '<button class="sm" data-act="'+(h.on?'harch':'hrest')+'" data-h="'+h.id+'">'+(h.on?'Archive':'Restore')+'</button></div>'+
+          ((h.it&&h.it.length)||h.blk?'<label class="hlbl" for="hi_'+h.id+'">Items inside this block, one per line. Start a line with * for the minimum-day item.</label><textarea class="inp hedit" id="hi_'+h.id+'" data-hit="'+h.id+'" rows="'+Math.min(10,(h.it||[]).length+1)+'">'+esc((h.it||[]).join('\n'))+'</textarea>':'')+'</div>';
       }).join('')+'</div></section>';
-  }).join('');
+  }).join('');}
+  function cat(h){if(!h.on&&!h.blk)return 'old';var f=h.freq||'daily';return f==='daily'?(h.nd?'need':'daily'):f;}
+  var CATS=[['daily','Daily'],['need','As needed'],['weekly','Weekly'],['monthly','Monthly'],['quarterly','Quarterly'],['yearly','Yearly'],['old','Old']];
+  var cnt={};state.habits.forEach(function(h){var c=cat(h);cnt[c]=(cnt[c]||0)+(h.on?1:0)+(c==='old'?(h.on?0:1):0);});
+  var shown=CATS.filter(function(c){return c[0]==='daily'||c[0]==='need'||(cnt[c[0]]||state.habits.some(function(h){return cat(h)===c[0];}));});
+  var sel=shown.some(function(c){return c[0]===ui.hf;})?ui.hf:'daily';
+  var segs=segHTML(shown.map(function(c){return [c[0],c[1]+' ('+(cnt[c[0]]||0)+')'];}),sel,'shf');
+  var groups='<div class="hfseg">'+segs+'</div>'+(sel==='old'?'<p class="hint" style="margin:8px 0">Your previous routine. It is kept so your history is not lost. Restore any of it if you need it.</p>':(sel==='need'?'<p class="hint" style="margin:8px 0">Blocks you only need on some days. They sit in a folded group on Today and are not counted in the daily percentage, the minimum day or the streaks.</p>':''))+hg(state.habits.filter(function(h){return cat(h)===sel;}));
   return '<div class="panel" style="margin-top:12px"><h3>Add habit</h3><div class="addf4"><input class="inp" id="newName" placeholder="Habit name" aria-label="New habit name"><select class="inp" id="newSec" aria-label="Section">'+SECTIONS.map(function(x){return '<option value="'+x.id+'">'+esc(x.name)+'</option>';}).join('')+'</select><select class="inp" id="newFreq" aria-label="Frequency">'+FREQS.map(function(x){return '<option value="'+x[0]+'">'+x[1]+'</option>';}).join('')+'</select><button class="btn pri" data-act="hadd">Add</button></div><p class="hint" style="margin-top:6px">Archiving hides a habit without deleting its history. Weekly, monthly, quarterly and yearly habits show on Today under their own period instead of every day.</p></div>'+groups;
 }
 function cloudPanel(){
@@ -2402,7 +2912,7 @@ function render(){
   $('main').classList.toggle('wide',ui.tab==='month'||ui.tab==='stats');
   document.querySelectorAll('textarea.auto').forEach(fit);
   var g2=$('#gw');if(g2){g2.scrollLeft=gl;g2.scrollTop=gt;}
-  if(ui.pop){var pe=$('[data-act="toggle"][data-h="'+ui.pop+'"] .box');if(pe)pe.classList.add('pop');ui.pop=null;}
+  if(ui.pop){var pe=$('[data-act="toggle"][data-h="'+ui.pop+'"] .box')||$('.box[data-act="toggle"][data-h="'+ui.pop+'"]');if(pe)pe.classList.add('pop');ui.pop=null;}
   if(focusSel){var f=$(focusSel);if(f&&!f.disabled){try{f.focus({preventScroll:true});}catch(e){}}focusSel=null;}
   if(focusTabIdx!=null){
     var cs=document.querySelectorAll('.subtabs'),c=cs[focusTabIdx],sel=c&&c.querySelector('[aria-selected="true"]');
@@ -2565,7 +3075,7 @@ document.addEventListener('click',function(e){
     case 'tab':if(el.dataset.set)ui.set=el.dataset.set;go(el.dataset.tab);break;
     case 'goto':go(el.dataset.tab,el.dataset.sub);break;
     case 'jump':{ui.tab='today';if(ui.fold[el.dataset.s]){ui.fold[el.dataset.s]=false;saveUI();}render();var sec=$('#sec-'+el.dataset.s);if(sec)sec.scrollIntoView({behavior:'smooth',block:'start'});break;}
-    case 'toggle':{h=el.dataset.h;var was=isDone(h,ui.date);setDone(h,ui.date,!was);syncCnt(h,ui.date,!was);if(!was){buzz(12);ui.pop=h;}focusSel=el.classList.contains('nx-do')?'.nx-do':'[data-act="toggle"][data-h="'+h+'"]';render();break;}
+    case 'toggle':{h=el.dataset.h;var was=isDone(h,ui.date);setDone(h,ui.date,!was);syncCnt(h,ui.date,!was);itemsAll(state.habits.find(function(q){return q.id===h;}),ui.date,!was);if(!was){buzz(12);ui.pop=h;}focusSel=el.classList.contains('nx-do')?'.nx-do':'[data-act="toggle"][data-h="'+h+'"]';render();break;}
     case 'cell':h=el.dataset.h;d=el.dataset.d;setDone(h,d,!isDone(h,d));syncCnt(h,d,isDone(h,d));focusSel='[data-act="cell"][data-h="'+h+'"][data-d="'+d+'"]';render();break;
     case 'daynav':n=Number(el.dataset.n);d=addDays(ui.date,n);if(d<=todayStr()){ui.date=d;ui.confirm='';render();}break;
     case 'gotoday':ui.date=todayStr();render();break;
@@ -2587,13 +3097,14 @@ document.addEventListener('click',function(e){
     case 'lockon':setLock();break;
     case 'lockoff':clearLock();break;
     case 'recdel':{var rid=el.dataset.id;state.money.rec=state.money.rec.filter(function(r){return r.id!==rid;});touch('money');render();break;}
-    case 'ptoggle':{var hp=state.habits.find(function(x){return x.id===el.dataset.h;});if(hp){togglePeriodDone(hp,ui.date);buzz(12);render();}break;}
+    case 'ptoggle':{var hp=state.habits.find(function(x){return x.id===el.dataset.h;});if(hp){var pw=isPeriodDone(hp,ui.date);togglePeriodDone(hp,ui.date);itemsAll(hp,ui.date,!pw);buzz(12);render();}break;}
     case 'wheeltab':ui.stats=ui.stats||{};ui.stats.wheel=el.dataset.w;render();break;
     case 'mnav':ui.month=addMonths(ui.month,Number(el.dataset.n));render();break;
     case 'mnow':ui.month=todayStr().slice(0,7);render();break;
     case 'revtype':ui.rev.type=el.dataset.type;ui.rev.anchor=todayStr();render();break;
     case 'revnav':ui.rev.anchor=shiftAnchor(ui.rev.type,ui.rev.anchor,Number(el.dataset.n));render();break;
     case 'revnow':ui.rev.anchor=todayStr();render();break;
+    case 'goreview':ui.rev.type='w';ui.rev.anchor=todayStr();go('reviews');break;
     case 'rvcheck':{var P=periodOf(ui.rev.type,ui.rev.anchor),r=revWrite(P.key),it=el.dataset.item;r.c[it]=!r.c[it];touch('journal');focusSel='[data-act="rvcheck"][data-item="'+it+'"]';render();break;}
     case 'rvrate':{var P2=periodOf(ui.rev.type,ui.rev.anchor),r2=revWrite(P2.key),it2=el.dataset.item,v=Number(el.dataset.n);r2.r[it2]=(r2.r[it2]===v)?0:v;touch('journal');focusSel='[data-act="rvrate"][data-item="'+it2+'"][data-n="'+v+'"]';render();break;}
     /* train: subtabs */
@@ -2685,12 +3196,30 @@ document.addEventListener('click',function(e){
         break;
       }
       state.settings.notify=false;touch('core');render();break;}
+    case 'tadd':{var tIn=$('#'+(el.dataset.in||'taskIn')),tv=((tIn&&tIn.value)||'').trim();if(!tv){toast('Write the task first.');break;}
+      var tPc=parseCapture(tv,todayStr());taskAdd(tPc.title,tPc.kind==='task'?tPc.due:'');toast('Task added'+(tPc.due?' for '+dueLabel(tPc.due,todayStr()).toLowerCase():''));focusSel='#'+(el.dataset.in||'taskIn');render();break;}
+    case 'ttoggle':{var tk=(state.tasks||[]).find(function(x){return x.id===el.dataset.t;});if(tk){tk.done=1;tk.u=Date.now();touch('core');buzz(12);toast('Done: '+tk.t.slice(0,40));render();}break;}
+    case 'tdel':{var td=(state.tasks||[]).find(function(x){return x.id===el.dataset.t;});if(td){td.x=1;td.u=Date.now();touch('core');toast('Task deleted');render();}break;}
+    case 'tclear':{var nowU=Date.now();(state.tasks||[]).forEach(function(x){if(!x.x&&x.done){x.x=1;x.u=nowU;}});touch('core');render();break;}
+    case 'tprio':{var tq=(state.tasks||[]).find(function(x){return x.id===el.dataset.t;});if(tq){var nn2=state.notes[ui.date]||(state.notes[ui.date]={});for(var pi=1;pi<=3;pi++){if(!String(nn2['p'+pi]||'').trim()){nn2['p'+pi]=tq.t;break;}}touch('journal');render();}break;}
+    case 'bx':{ui.open=ui.open||{};ui.open[el.dataset.h]=!ui.open[el.dataset.h];focusSel='[data-act="bx"][data-h="'+el.dataset.h+'"]';render();break;}
+    case 'itm':{var hq=state.habits.find(function(q){return q.id===el.dataset.h;});if(hq){setItem(hq,ui.date,+el.dataset.i);focusSel='[data-act="itm"][data-h="'+hq.id+'"][data-i="'+el.dataset.i+'"]';render();}break;}
+    case 'shf':ui.hf=el.dataset.k;render();break;
+    case 'hnd':{var hn=state.habits.find(function(q){return q.id===el.dataset.h;});if(hn){hn.nd=!hn.nd;if(hn.nd)hn.min=false;touch('core');render();toast(hn.nd?'Moved to As needed.':'Counted in the daily percentage again.');}break;}
     case 'hmin':{var hb=state.habits.find(function(q){return q.id===el.dataset.h;});if(hb){hb.min=!hb.min;touch('core');focusSel='[data-act="hmin"][data-h="'+hb.id+'"]';render();}break;}
-    case 'harch':case 'hrest':{var hc=state.habits.find(function(q){return q.id===el.dataset.h;});if(hc){hc.on=(act==='hrest');touch('core');render();}break;}
+    case 'harch':case 'hrest':{var hc=state.habits.find(function(q){return q.id===el.dataset.h;});if(hc){hc.on=(act==='hrest');if(hc.on)delete hc.to;else hc.to=addDays(todayStr(),-1);touch('core');render();}break;}
     case 'hmove':{var mv=moveHabit(el.dataset.h);if(mv){touch('core');focusSel='[data-act="hmove"][data-h="'+mv+'"]';render();}break;}
     case 'hadd':{var nm2=($('#newName').value||'').trim(),sc=$('#newSec').value,fq=($('#newFreq')||{}).value;
       if(!nm2){ui.msg='Enter a habit name first.';render();break;}
-      state.habits.push({id:'h'+pad(state.nextId++),s:sc,n:nm2,min:false,on:true,freq:FREQ_SET[fq]?fq:'daily',k:''});touch('core');ui.msg='Added: '+nm2;render();break;}
+      state.habits.push({id:'h'+pad(state.nextId++),s:sc,n:nm2,min:false,on:true,freq:FREQ_SET[fq]?fq:'daily',k:'',from:todayStr()});touch('core');ui.msg='Added: '+nm2;render();break;}
+    case 'expadd':{
+      var xt=(($('#expTitle')||{}).value||'').trim(),xm=($('#expMetric')||{}).value,xd=Math.max(3,Math.min(60,Math.floor(num(($('#expDays')||{}).value)||14)));
+      if(!xt){toast('Name the experiment first.');break;}
+      if(!EXP_M[xm])xm='sleep';
+      state.experiments.push({id:'x'+nid(state,'')+'',t:xt.slice(0,120),m:xm,start:todayStr(),days:xd,end:addDays(todayStr(),xd-1),done:false,keep:''});
+      touch('core');render();break;}
+    case 'expend':{var xe=activeExp();if(xe){xe.done=true;xe.keep=el.dataset.v==='yes'?'yes':'no';touch('core');render();toast(xe.keep==='yes'?'Kept. Add it to your routine if it needs a place there.':'Dropped.');}break;}
+    case 'expdel':{var xc=activeExp();if(xc){state.experiments=state.experiments.filter(function(e){return e!==xc;});touch('core');render();toast('Experiment cancelled.');}break;}
     case 'export':doExport();break;
     case 'restoreprev':doRestorePrev();break;
     case 'import':if(!(ui.importText||'').trim()){ui.msg='Paste a backup first.';}else{ui.confirm='import';ui.msg='';}render();break;
@@ -2726,6 +3255,7 @@ document.addEventListener('input',function(e){
   else if(ds.plabel){pomo.label=t.value;}
   else if(ds.gp){var g=state.goals.find(function(z){return z.id===ds.gp;});if(g){g.p=Number(t.value);touch('core');}}
   else if(ds.gt){var g0=state.goals.find(function(z){return z.id===ds.gt;});if(g0){g0.t=t.value;touch('core');}}
+  else if(ds.td){var tt=(state.tasks||[]).find(function(x){return x.id===ds.td;});if(tt){tt.due=/^\d{4}-\d\d-\d\d$/.test(t.value)?t.value:'';tt.u=Date.now();touch('core');}}
   else if(ds.nt){var qn=(state.qnotes||[]).find(function(z){return z.id===ds.nt;});if(qn){qn.t=t.value;qn.upd=Date.now();touch('journal');}}
   else if(ds.nb){var qn2=(state.qnotes||[]).find(function(z){return z.id===ds.nb;});if(qn2){qn2.b=t.value;qn2.upd=Date.now();touch('journal');}}
   else if(t.id==='noteSearch'){ui.notes.q=t.value;clearTimeout(window.__ns);window.__ns=setTimeout(function(){var nl=$('#noteList');if(nl){nl.innerHTML=notesListHTML();nl.querySelectorAll('textarea.auto').forEach(fit);}},220);}
@@ -2734,9 +3264,11 @@ document.addEventListener('input',function(e){
 document.addEventListener('change',function(e){
   var t=e.target,ds=t.dataset;
   if(ds.hn){var h=state.habits.find(function(x){return x.id===ds.hn;});var v=t.value.trim();if(h&&v){h.n=v;touch('core');}else if(h){t.value=h.n;}}
+  else if(ds.hit){var h9=state.habits.find(function(x){return x.id===ds.hit;});if(h9){h9.it=t.value.split('\n').map(function(x){return x.trim();}).filter(Boolean).slice(0,40);touch('core');}}
   else if(ds.hs){var h2=state.habits.find(function(x){return x.id===ds.hs;});if(h2&&SEC[t.value]){h2.s=t.value;touch('core');render();}}
   else if(ds.hf){var h6=state.habits.find(function(x){return x.id===ds.hf;});if(h6&&FREQ_SET[t.value]){h6.freq=t.value;touch('core');render();}}
   else if(ds.rem){if(/^\d\d:\d\d$/.test(t.value)){state.settings['rem'+ds.rem]=t.value;touch('core');}}
+  else if(ds.td){var tt2=(state.tasks||[]).find(function(x){return x.id===ds.td;});if(tt2){tt2.due=/^\d{4}-\d\d-\d\d$/.test(t.value)?t.value:'';tt2.u=Date.now();touch('core');render();}}
   else if(ds.hsh){var h7=state.habits.find(function(x){return x.id===ds.hsh;});if(h7){h7.sh=(t.value==='M'||t.value==='E')?t.value:'';touch('core');render();}}
   else if(ds.htg){var h8=state.habits.find(function(x){return x.id===ds.htg;});if(h8){h8.tg=Math.max(0,Math.floor(num(t.value)||0));touch('core');render();}}
   else if(ds.exn){var ex=exById(ds.exn);if(ex&&t.value.trim()){ex.n=t.value.trim();touch('train');}}
@@ -2867,10 +3399,16 @@ function qcRun(){
   if(v.charAt(0)==='>'){var c=qcItems[qcSel];if(c){qcClose();c.f();}return;}
   var txt=v.trim();if(!txt)return;
   var lines=txt.split(/\r?\n/),first=lines[0];
+  if(lines.length===1){
+    var pc=parseCapture(txt,todayStr());
+    if(pc.kind==='task'){taskAdd(pc.title,pc.due);qcClose();toast('Task added'+(pc.due?' for '+dueLabel(pc.due,todayStr()).toLowerCase():''));render();return;}
+    txt=first=pc.title;
+  }
   state.qnotes.unshift({id:nid(state,'n'),t:first.slice(0,80),b:first.length>80?txt:lines.slice(1).join('\n'),pin:false,inb:1,ts:Date.now(),upd:Date.now()});
   touch('journal');qcClose();toast('Saved to Notes');if(ui.tab==='notes')render();
 }
 document.addEventListener('keydown',function(e){
+  if(e.key==='Enter'&&e.target&&(e.target.id==='taskIn'||e.target.id==='taskIn2')){e.preventDefault();var tb=document.querySelector('[data-act="tadd"][data-in="'+e.target.id+'"]');if(tb)tb.click();return;}
   if((e.ctrlKey||e.metaKey)&&String(e.key).toLowerCase()==='k'){e.preventDefault();if(qcEl)qcClose();else qcOpen(true);return;}
   if(!qcEl)return;
   if(e.key==='Escape'){qcClose();}
