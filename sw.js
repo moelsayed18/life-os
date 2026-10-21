@@ -1,6 +1,6 @@
 /* Life OS service worker: opens instantly and works offline.
    Bump CACHE when you publish a new version so old files are dropped. */
-const CACHE = 'lifeos-v6-8';
+const CACHE = 'lifeos-v7-1';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 const FONTS = ['https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Instrument+Sans:wght@400;500;600&display=swap'];
 

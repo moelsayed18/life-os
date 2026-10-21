@@ -456,6 +456,17 @@ details.hist ul{margin:8px 0 0;padding-inline-start:18px;color:var(--muted);font
 .qcitem{text-align:start;padding:10px 12px;border:0;border-radius:var(--r-s);background:none}
 .qcfab:focus-visible,.qcitem:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .qcitem[aria-selected="true"],.qcitem:hover{background:var(--surface2)}
+
+/* routine card and small polish */
+html{-webkit-tap-highlight-color:transparent}
+.btn,.sm,.tab{transition:background-color .15s,border-color .15s,transform .1s}.btn:active,.sm:active{transform:scale(.97)}
+.rbl{margin:10px 0 0}.rbr{display:grid;grid-template-columns:56px 1fr auto;gap:10px;align-items:center;padding:10px 12px;margin-top:6px;border:1px solid var(--line);border-radius:var(--r-m);background:var(--surface)}
+.rbr b{font-variant-numeric:tabular-nums}.rbr i{font-style:normal;color:var(--muted);font-size:13px}
+.rbr.now{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--surface))}.rbr.past{opacity:.55}
+.rbfull summary{cursor:pointer;display:flex;align-items:center;min-height:44px;color:var(--accent)}
+.rbe{display:grid;grid-template-columns:108px 1fr 72px auto;gap:8px;align-items:center;margin-top:8px}
+@media(max-width:520px){.rbe{grid-template-columns:96px 1fr 62px auto}}
+@media(prefers-reduced-motion:reduce){.btn,.sm,.tab{transition:none}.btn:active,.sm:active{transform:none}}
 </style>
 </head>
 <body>
@@ -679,9 +690,10 @@ function mergeTasks(a,b){
   [a,b].forEach(function(list){(list||[]).forEach(function(x){if(!x||!x.id)return;var o=by[x.id];if(!o||(x.u||0)>=(o.u||0))by[x.id]=x;});});
   return Object.keys(by).map(function(k){return by[k];}).sort(function(p,q){return (q.ts||0)-(p.ts||0);});
 }
-function taskRowHTML(x,t){
+function taskRowHTML(x,t){var r=taskRowInner(x,t);return (x.due&&x.due<t)?'<div class="trow">'+r+'<button class="sm" data-act="tpost" data-t="'+x.id+'" aria-label="Move to tomorrow">Tomorrow</button></div>':r;}
+function taskRowInner(x,t){
   var lab=dueLabel(x.due,t),over=x.due&&x.due<t;
-  return '<button class="irow" data-act="ttoggle" data-t="'+x.id+'" role="checkbox" aria-checked="false"><span class="ibox">'+CHECK+'</span><span class="itx">'+esc(x.t)+(lab?' <span class="tdue'+(over?' over':'')+'">'+esc(lab)+'</span>':'')+(x.src==='tg'?' <span class="tdue">Telegram</span>':'')+'</span></button>';
+  return '<button class="irow" data-act="ttoggle" data-t="'+x.id+'" role="checkbox" aria-checked="false"><span class="ibox">'+CHECK+'</span><span class="itx">'+esc(x.t)+(lab?' <span class="tdue'+(over?' over':'')+'">'+esc(lab)+'</span>':'')+'</span></button>';
 }
 function tasksPanel(d){
   var t=todayStr();if(d!==t)return '';
@@ -707,7 +719,7 @@ function tasksPlanPanel(){
   groups.forEach(function(g){
     if(!g[1].length)return;
     h+='<h4 style="margin:12px 0 2px;font-size:14px;color:var(--muted)">'+g[0]+' ('+g[1].length+')</h4>'+g[1].map(function(x){
-      return '<div class="trow"><button class="irow" data-act="ttoggle" data-t="'+x.id+'" role="checkbox" aria-checked="false"><span class="ibox">'+CHECK+'</span><span class="itx">'+esc(x.t)+'</span></button><input class="inp tdate" type="date" data-td="'+x.id+'" value="'+esc(x.due||'')+'" aria-label="Due date"><button class="sm" data-act="tdel" data-t="'+x.id+'" aria-label="Delete task">Delete</button></div>';
+      return '<div class="trow"><button class="irow" data-act="ttoggle" data-t="'+x.id+'" role="checkbox" aria-checked="false"><span class="ibox">'+CHECK+'</span><span class="itx">'+esc(x.t)+'</span></button><input class="inp tdate" type="date" data-td="'+x.id+'" value="'+esc(x.due||'')+'" aria-label="Due date">'+(x.due?'<button class="sm" data-act="tcal" data-t="'+x.id+'" aria-label="Add to calendar">Calendar</button>':'')+(x.due&&x.due<t?'<button class="sm" data-act="tpost" data-t="'+x.id+'">Tomorrow</button>':'')+'<button class="sm" data-act="tdel" data-t="'+x.id+'" aria-label="Delete task">Delete</button></div>';
     }).join('');
   });
   if(!open.length)h+='<p class="hint">No open tasks.</p>';
@@ -715,22 +727,58 @@ function tasksPlanPanel(){
   if(doneN)h+='<div class="btns" style="margin-top:10px"><button class="btn sm2" data-act="tclear">Clear '+doneN+' done</button></div>';
   return h+'</div>';
 }
-async function importInbox(){
-  var cfg=syncCfg();if(!cfg)return;
-  try{
-    var res=await fetch('https://api.github.com/repos/'+cfg.repo+'/contents/bot/inbox.json',{headers:ghHeaders(cfg),cache:'no-store'});
-    if(!res.ok)return;
-    var j=await res.json(),obj=JSON.parse(b64d(j.content||'')),items=(obj&&obj.items)||[],n=0;
-    state.inboxSeen=state.inboxSeen||{};
-    items.forEach(function(it){
-      if(!it||!it.id||!it.text||state.inboxSeen[it.id])return;
-      var pc=parseCapture(it.text,/^\d{4}-\d\d-\d\d$/.test(it.day||'')?it.day:todayStr());
-      if(pc.kind==='task')taskAdd(pc.title,pc.due,'tg'+it.id,'tg');
-      else if(!(state.qnotes||[]).some(function(q){return q.id==='ntg'+it.id;}))state.qnotes.unshift({id:'ntg'+it.id,t:pc.title.slice(0,80),b:pc.title.length>80?pc.title:'',pin:false,inb:1,ts:Date.now(),upd:Date.now()});
-      state.inboxSeen[it.id]=1;n++;
-    });
-    if(n){var ks=Object.keys(state.inboxSeen);if(ks.length>300)ks.slice(0,ks.length-300).forEach(function(k){delete state.inboxSeen[k];});touch('core','journal');safeRender();toast(n+(n>1?' items':' item')+' from Telegram');}
-  }catch(e){}
+/* ---- calendar export: reminders that work with the app closed ---- */
+function icsEsc(x){return String(x).replace(/[\\;,]/g,'\\$&').replace(/\n/g,'\\n');}
+function icsStamp(){return new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+/,'');}
+function icsEvent(uid,day,hhmm,mins,title){return ['BEGIN:VEVENT','UID:'+uid+'@lifeos','DTSTAMP:'+icsStamp(),'DTSTART:'+day.replace(/-/g,'')+'T'+hhmm.replace(':','')+'00','DURATION:PT'+mins+'M','SUMMARY:'+icsEsc(title),'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsEsc(title),'TRIGGER:PT0S','END:VALARM','END:VEVENT'];}
+function icsFile(name,ev){
+  var txt=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Life OS//EN','CALSCALE:GREGORIAN'].concat(ev,['END:VCALENDAR']).join('\r\n')+'\r\n';
+  try{var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'text/calendar'}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href);},4000);toast('Open the file to add it to your calendar');}catch(e){toast('Could not create the file');}
+}
+function icsDaily(){
+  var g=state.settings,t=todayStr(),ev=[];
+  for(var i=0;i<30;i++){var d=addDays(t,i);if(isOff(d))continue;
+    ev=ev.concat(icsEvent('lifeos-daily-'+d,d,(shiftOf(d)==='E'?g.remE:g.remM)||'21:00',15,'Life OS: check off your essentials'));}
+  icsFile('lifeos-reminders.ics',ev);
+}
+function icsTask(id){
+  var x=(state.tasks||[]).find(function(k){return k.id===id;});
+  if(!x||!x.due){toast('Set a due date first');return;}
+  icsFile('lifeos-task.ics',icsEvent('lifeos-task-'+x.id,x.due,'09:00',30,x.t));
+}
+var sizeC={r:-1,h:''};
+function sizeNudge(){
+  if(!sync.refs)return '';
+  if(sizeC.r!==rev){var b=[];Object.keys(DOCS).forEach(function(p){var n=byteLen(JSON.stringify(pick(p)));if(n>480000)b.push(p+' '+Math.round(n/1024)+' KB');});
+    sizeC.r=rev;sizeC.h=b.length?'<div class="nudge"><span>Sync size warning: '+b.join(', ')+'. Each part can carry about 585 KB. Export a backup and trim old items before it stops syncing.</span></div>':'';}
+  return sizeC.h;
+}
+/* ================= day routine: an ordinary day as time blocks, per day type ================= */
+var RB_TYPES=[['M','Morning shift'],['E','Night shift'],['O','Day off']];
+var RB_STARTER=[['06:30','Wake up, water, light',15],['07:00','Breakfast',30],['08:00','Deep work',90],['10:00','Break and a walk',20],['10:30','Study or project',90],['12:30','Lunch',45],['14:00','Training or movement',60],['16:00','Chores and errands',60],['18:00','Family and friends',90],['20:00','Dinner',45],['21:00','Plan tomorrow and wind down',30],['22:30','Sleep',0]];
+function hm2m(x){var p=String(x).split(':');return (+p[0])*60+(+p[1]);}
+function rbType(d){var k=shiftOf(d);return ({M:1,E:1,O:1})[k]?k:'O';}
+function rbList(d){return (state.rb||[]).filter(function(x){return !x.x&&x.d===d;}).sort(function(a,b){return hm2m(a.t)-hm2m(b.t);});}
+function rbAdd(d,t,n,m){state.rb=state.rb||[];var now=Date.now();state.rb.push({id:nid(state,'r'),d:d,t:t,n:n,m:m,ts:now,u:now});}
+function rbRow(x,c){return '<div class="rbr'+(c?' '+c:'')+'"><b>'+x.t+'</b><span>'+esc(x.n)+'</span><i>'+(x.m?x.m+' min':'')+'</i></div>';}
+function rbToday(d){
+  if(d!==todayStr())return '';
+  var sh=rbType(d),L=rbList(sh);if(!L.length)return '';
+  var n=new Date(),cur=n.getHours()*60+n.getMinutes(),idx=-1;
+  L.forEach(function(x,i){if(hm2m(x.t)<=cur)idx=i;});
+  var now=idx>=0?L[idx]:null,live=!!now&&(!now.m||cur<hm2m(now.t)+now.m),nx=L[idx+1];
+  var type=RB_TYPES.filter(function(x){return x[0]===sh;})[0][1];
+  return '<div class="panel rbcard" id="rbcard"><h3>Routine <span class="hint">'+esc(type)+'</span></h3>'+
+    (live?'<p class="hint rbl">Now</p>'+rbRow(now,'now'):'')+
+    (nx?'<p class="hint rbl">Next</p>'+rbRow(nx,''):(live?'':'<p class="hint">The routine for today is finished.</p>'))+
+    '<details class="rbfull"><summary>Full day ('+L.length+' blocks)</summary>'+L.map(function(x,i){return rbRow(x,(i<idx||(i===idx&&!live))?'past':(i===idx?'now':''));}).join('')+'</details></div>';
+}
+function rbPanel(){
+  var d=ui.rbd||rbType(todayStr()),L=rbList(d);
+  return '<div class="panel"><h3>Day routine</h3><p class="hint" style="margin-bottom:8px">Your ordinary day as time blocks, one list per day type. Today shows what is now and what is next. Edit anything.</p>'+segHTML(RB_TYPES,d,'rbd')+
+   (L.length?L.map(function(x){return '<div class="rbe"><input class="inp" type="time" data-rbt="'+x.id+'" value="'+x.t+'" aria-label="Start time"><input class="inp" data-rbn="'+x.id+'" value="'+esc(x.n)+'" aria-label="Block name"><input class="inp" type="number" min="0" max="600" step="5" data-rbm="'+x.id+'" value="'+(x.m||0)+'" aria-label="Minutes"><button class="rm" data-act="rbdel" data-b="'+x.id+'" aria-label="Remove block">\u00D7</button></div>';}).join(''):'<p class="hint" style="padding:10px 0">No blocks for this day type yet.</p>')+
+   '<div class="rbe"><input class="inp" type="time" id="rbT" value="09:00" aria-label="New block start time"><input class="inp" id="rbN" placeholder="New block" aria-label="New block name"><input class="inp" type="number" min="0" max="600" step="5" id="rbM" value="30" aria-label="New block minutes"><button class="btn pri" data-act="rbadd">Add</button></div>'+
+   (L.length?'':'<div class="btns" style="margin-top:10px"><button class="btn" data-act="rbstart">Load a starter routine</button>'+RB_TYPES.filter(function(x){return x[0]!==d&&rbList(x[0]).length;}).map(function(x){return '<button class="btn" data-act="rbcopy" data-k="'+x[0]+'">Copy from '+x[1]+'</button>';}).join('')+'</div>')+'</div>';
 }
 
 var SECTIONS=[
@@ -1009,7 +1057,7 @@ var STANDALONE=true;
 var LS_KEY='lifeos.v1',UI_KEY='lifeos.ui';
 var storageOK=true;
 try{localStorage.setItem('__t','1');localStorage.removeItem('__t');}catch(e){storageOK=false;}
-var DOCS={core:['v','blockStart','experiments','itemLog','tasks','inboxSeen','habits','nextId','log','goals','targets','settings','seq','body','focus','stretchLog','shifts','off','counts','mood','dayTs','periodDone','importedAthleticPlan','importedWeeklyHabits','rules'],journal:['notes','reviews','qnotes','study'],train:['exercises','plans','workouts','program','tests'],money:['money']};
+var DOCS={core:['v','blockStart','experiments','itemLog','tasks','rb','inboxSeen','habits','nextId','log','goals','targets','settings','seq','body','focus','stretchLog','shifts','off','counts','mood','dayTs','periodDone','importedAthleticPlan','importedWeeklyHabits','rules'],journal:['notes','reviews','qnotes','study'],train:['exercises','plans','workouts','program','tests'],money:['money']};
 
 /* schema ladder: add one function per version bump, keyed by the version it upgrades FROM */
 var NEWRULE='Anchor to the day type (morning, night, off), not the clock';
@@ -1064,6 +1112,7 @@ function normalize(s){
   s.periodDone=(s.periodDone&&typeof s.periodDone==='object')?s.periodDone:{};
   (function(){var il=(s.itemLog&&typeof s.itemLog==='object'&&!Array.isArray(s.itemLog))?s.itemLog:{},cut=addDays(todayStr(),-150),o={};
     Object.keys(il).forEach(function(k){var dk=k.charAt(0)==='p'?k.slice(k.indexOf(':',2)+1):k;if(dk>=cut&&il[k]&&typeof il[k]==='object')o[k]=il[k];});s.itemLog=o;})();
+  (function(){var cut=Date.now(),o=[];(Array.isArray(s.rb)?s.rb:[]).forEach(function(x){if(!x||!x.id||typeof x.n!=='string'||!/^\d\d:\d\d$/.test(x.t||'')||!/^[MEO]$/.test(x.d||''))return;var u=+x.u||+x.ts||0;if(x.x&&cut-u>30*86400000)return;var b={id:String(x.id),d:x.d,t:x.t,n:x.n.slice(0,80),m:Math.max(0,Math.min(600,+x.m||0)),ts:+x.ts||u,u:u};if(x.x)b.x=1;o.push(b);});s.rb=o;})();
   (function(){var cut=Date.now(),L=Array.isArray(s.tasks)?s.tasks:[],o=[];
     L.forEach(function(x){if(!x||!x.id||typeof x.t!=='string')return;
       var due=/^\d{4}-\d\d-\d\d$/.test(x.due||'')?x.due:'',u=+x.u||+x.ts||0;
@@ -1436,6 +1485,7 @@ function remindPanel(){
   var g=state.settings;
   return '<div class="panel"><h3>Daily reminder</h3><p class="hint">If you have not checked off the minimum day by the time below, you get a notification. The time depends on that day\'s shift. It only works in an installed app on Chrome for Android, and only after you allow notifications.</p>'+
     '<div class="btns"><button class="toggle" data-act="'+'tnotify'+'" aria-pressed="'+g.notify+'">Notifications</button></div>'+
+    '<p class="hint" style="margin-top:10px">Works on any phone, even with the app closed: add the next 30 days of reminders to your calendar. They follow your shifts and skip paused days. Export again about once a month.</p><div class="btns"><button class="btn sm2 pri" data-act="icsdaily">Export 30 days of reminders (.ics)</button></div>'+
     '<div class="grid2"><label class="lbl"><span>Morning shift or day off</span><input class="inp" type="time" data-rem="M" value="'+esc(g.remM)+'"></label><label class="lbl"><span>Night shift</span><input class="inp" type="time" data-rem="E" value="'+esc(g.remE)+'"></label></div></div>';
 }
 function schedulePush(){if(!sync.refs)return;clearTimeout(pushT);pushT=setTimeout(pushRemote,1200);}
@@ -1493,11 +1543,11 @@ async function reconcile(){
       var localDirty=!!dirty[p]||(seen!==undefined&&(state.ts[p]||0)>seen);
       var remoteNew=seen===undefined?ru>(state.ts[p]||0):ru!==seen;
       if(body.json&&remoteNew){
-        var remote=JSON.parse(body.json),mine={dm:(function(){var o={};DAYMAPS.forEach(function(k){o[k]=state[k];});return o;})(),dt:state.dayTs||{},log:state.log,periodDone:state.periodDone,tasks:state.tasks,inboxSeen:state.inboxSeen,tx:(state.money&&state.money.tx)||[]};
+        var remote=JSON.parse(body.json),mine={dm:(function(){var o={};DAYMAPS.forEach(function(k){o[k]=state[k];});return o;})(),dt:state.dayTs||{},log:state.log,periodDone:state.periodDone,tasks:state.tasks,rb:state.rb,inboxSeen:state.inboxSeen,tx:(state.money&&state.money.tx)||[]};
         if(localDirty)snapshot('merge');
         DOCS[p].forEach(function(k){if(remote[k]!==undefined)state[k]=remote[k];});
         if(localDirty){
-          if(p==='core'){mergeCoreDays(mine,remote);state.periodDone=mergeFlags(state.periodDone,mine.periodDone);state.tasks=mergeTasks(mine.tasks,state.tasks);state.inboxSeen=mergeFlags(state.inboxSeen,mine.inboxSeen);}
+          if(p==='core'){mergeCoreDays(mine,remote);state.periodDone=mergeFlags(state.periodDone,mine.periodDone);state.tasks=mergeTasks(mine.tasks,state.tasks);state.rb=mergeTasks(mine.rb,state.rb);state.inboxSeen=mergeFlags(state.inboxSeen,mine.inboxSeen);}
           if(p==='money'&&state.money){state.money.tx=mergeTx(state.money.tx,mine.tx);}
           state.ts[p]=Date.now();dirty[p]=1;
         }else state.ts[p]=body.updated;
@@ -1512,7 +1562,6 @@ async function reconcile(){
   }
   if(changed){state=normalize(state);persistLocal();safeRender();}
   await pushRemote();
-  await importInbox();
 }
 /* ---- GitHub repo storage (standalone build) ---- */
 var SYNC_KEY='lifeos.sync',SEEN_KEY='lifeos.seen';
@@ -2264,7 +2313,7 @@ function viewToday(){
     return '<label class="prow"><span class="pn">'+n+'</span><input class="pin" data-notet="p'+n+'" value="'+esc(tmw['p'+n]||'')+'" placeholder="'+(n===1?'The one thing that matters most':'Priority '+n)+'" aria-label="Tomorrow priority '+n+'"></label>';
   }).join('')+'</details>':'';
   var recur=ui.minOnly?'':needPanel(d)+['weekly','monthly','quarterly','yearly'].map(function(fq){return periodPanel(fq,d);}).join('');
-  return nudge+cbBanner+remBanner+wkNudge+heroHTML(d)+stratHTML(d)+tasksPanel(d)+sleepCardHTML(d)+
+  return sizeNudge()+nudge+cbBanner+remBanner+wkNudge+heroHTML(d)+stratHTML(d)+tasksPanel(d)+rbToday(d)+sleepCardHTML(d)+
     '<p class="rule">Rule of the day: <b>'+esc(state.rules[doy%state.rules.length]||'')+'</b></p>'+
     weekStrip(d)+dayCtl(d)+prio+plan+tiles+
     '<div class="toolbar"><button class="toggle'+(okm?' ok':'')+'" data-act="minonly" aria-pressed="'+ui.minOnly+'">Minimum day'+(mn.length?' '+mdone+' of '+mn.length:'')+'</button>'+
@@ -2615,7 +2664,7 @@ function viewPlan(){
     tasksPlanPanel()+expPanel()+'<div class="panel"><h3>Personal rules</h3><div class="today-rule"><div class="hint" style="color:inherit;opacity:.7">Rule of the day</div><div class="en">'+esc(state.rules[doy%state.rules.length]||'')+'</div></div>'+
     state.rules.map(function(x,ri){return '<div class="pli"><div class="pli-top" style="grid-template-columns:1fr auto auto"><input class="inp" data-rule="'+ri+'" value="'+esc(x)+'" aria-label="Rule '+(ri+1)+'"><button class="sm mv" data-act="rulemove" data-i="'+ri+'" aria-label="Move up">\u2191</button><button class="rm" data-act="rulerm" data-i="'+ri+'" aria-label="Remove">\u00D7</button></div></div>';}).join('')+
     '<div class="addf" style="grid-template-columns:1fr auto;margin-top:10px"><input class="inp" id="newRule" placeholder="Add a rule" aria-label="New rule"><button class="btn pri" data-act="ruleadd">Add</button></div></div>'+
-    '<div class="panel"><h3>Minimum day</h3><p class="hint" style="margin-bottom:8px">On a bad day, do these and the day still counts.</p><div class="minbox" style="--c:var(--c-body)">'+(mn.length?mn.map(function(h){return rowHTML(h,ui.date);}).join(''):'<p class="hint" style="padding:12px 0">Mark habits as minimum day in Settings.</p>')+'</div></div>';
+    rbPanel()+'<div class="panel"><h3>Minimum day</h3><p class="hint" style="margin-bottom:8px">On a bad day, do these and the day still counts.</p><div class="minbox" style="--c:var(--c-body)">'+(mn.length?mn.map(function(h){return rowHTML(h,ui.date);}).join(''):'<p class="hint" style="padding:12px 0">Mark habits as minimum day in Settings.</p>')+'</div></div>';
 }
 
 /* ================= views: notes ================= */
@@ -3200,6 +3249,14 @@ document.addEventListener('click',function(e){
       var tPc=parseCapture(tv,todayStr());taskAdd(tPc.title,tPc.kind==='task'?tPc.due:'');toast('Task added'+(tPc.due?' for '+dueLabel(tPc.due,todayStr()).toLowerCase():''));focusSel='#'+(el.dataset.in||'taskIn');render();break;}
     case 'ttoggle':{var tk=(state.tasks||[]).find(function(x){return x.id===el.dataset.t;});if(tk){tk.done=1;tk.u=Date.now();touch('core');buzz(12);toast('Done: '+tk.t.slice(0,40));render();}break;}
     case 'tdel':{var td=(state.tasks||[]).find(function(x){return x.id===el.dataset.t;});if(td){td.x=1;td.u=Date.now();touch('core');toast('Task deleted');render();}break;}
+    case 'rbd':ui.rbd=el.dataset.k;render();break;
+    case 'rbadd':{var rt=$('#rbT').value,rn=($('#rbN').value||'').trim(),rm=parseInt($('#rbM').value,10)||0;if(!rn||!/^\d\d:\d\d$/.test(rt)){toast('Add a time and a name');break;}rbAdd(ui.rbd||rbType(todayStr()),rt,rn.slice(0,80),Math.max(0,Math.min(600,rm)));touch('core');focusSel='#rbN';render();break;}
+    case 'rbdel':{var rx=(state.rb||[]).find(function(x){return x.id===el.dataset.b;});if(rx){rx.x=1;rx.u=Date.now();touch('core');render();}break;}
+    case 'rbstart':{RB_STARTER.forEach(function(r){rbAdd(ui.rbd||rbType(todayStr()),r[0],r[1],r[2]);});touch('core');toast('Starter routine added. Edit it freely.');render();break;}
+    case 'rbcopy':{rbList(el.dataset.k).forEach(function(x){rbAdd(ui.rbd||rbType(todayStr()),x.t,x.n,x.m);});touch('core');render();break;}
+    case 'tpost':{var tp=(state.tasks||[]).find(function(x){return x.id===el.dataset.t;});if(tp){tp.due=addDays(todayStr(),1);tp.u=Date.now();touch('core');toast('Moved to tomorrow');render();}break;}
+    case 'tcal':icsTask(el.dataset.t);break;
+    case 'icsdaily':icsDaily();break;
     case 'tclear':{var nowU=Date.now();(state.tasks||[]).forEach(function(x){if(!x.x&&x.done){x.x=1;x.u=nowU;}});touch('core');render();break;}
     case 'tprio':{var tq=(state.tasks||[]).find(function(x){return x.id===el.dataset.t;});if(tq){var nn2=state.notes[ui.date]||(state.notes[ui.date]={});for(var pi=1;pi<=3;pi++){if(!String(nn2['p'+pi]||'').trim()){nn2['p'+pi]=tq.t;break;}}touch('journal');render();}break;}
     case 'bx':{ui.open=ui.open||{};ui.open[el.dataset.h]=!ui.open[el.dataset.h];focusSel='[data-act="bx"][data-h="'+el.dataset.h+'"]';render();break;}
@@ -3250,6 +3307,7 @@ document.addEventListener('input',function(e){
   }
   else if(ds.pi){var q=ds.pi.split(':'),pl=planById(ui.train.plan);if(pl&&pl.items[+q[0]]){pl.items[+q[0]][q[1]]=(q[1]==='sets')?(parseInt(t.value,10)||1):t.value;touch('train');}}
   else if(ds.plname){var pl2=planById(ui.train.plan);if(pl2){pl2.n=t.value||'Plan';touch('train');}}
+  else if(ds.rbt!==undefined||ds.rbn!==undefined||ds.rbm!==undefined){var rid=ds.rbt||ds.rbn||ds.rbm,rb=(state.rb||[]).find(function(x){return x.id===rid;});if(rb){if(ds.rbt!==undefined){if(/^\d\d:\d\d$/.test(t.value))rb.t=t.value;else t.value=rb.t;}else if(ds.rbn!==undefined){if(t.value.trim())rb.n=t.value.trim().slice(0,80);else t.value=rb.n;}else rb.m=Math.max(0,Math.min(600,parseInt(t.value,10)||0));rb.u=Date.now();touch('core');}}
   else if(ds.rule!==undefined){var rv2=t.value.trim();if(rv2)state.rules[+ds.rule]=rv2;else t.value=state.rules[+ds.rule];touch('core');}
   else if(ds.prog){var pk=ds.prog;state.program=state.program||{};if(pk==='start')state.program.start=t.value||'';else state.program[pk]=Math.max(1,parseInt(t.value,10)||1);touch('train');render();}
   else if(ds.plabel){pomo.label=t.value;}
@@ -3421,7 +3479,13 @@ try{if(window.top!==window.self)window.top.location=window.self.location;}catch(
 var qf=$('#qcFab');if(qf)qf.addEventListener('click',function(){qcOpen(false);});
 applyRec();applyComeback();
 try{if(state.settings.notify&&('Notification' in window)&&Notification.permission!=='granted')setTimeout(function(){toast('Notifications are blocked in this browser. Reminders will show inside the app.');},1500);}catch(e){}
-try{var gq=new URLSearchParams(location.search).get('go');if(gq&&VIEWS[gq])ui.tab=gq;}catch(e){}
+try{var sq=new URLSearchParams(location.search),gq=sq.get('go');if(gq&&VIEWS[gq])ui.tab=gq;
+if(gq==='capture')setTimeout(function(){qcOpen(false);},400);
+if(sq.get('share')){var sv=[];['title','text','url'].forEach(function(k){var v=(sq.get(k)||'').trim();if(v&&!sv.some(function(o){return o.indexOf(v)>=0;}))sv.push(v);});
+var sx=sv.join(' ').slice(0,400);if(sx){var sp=parseCapture(sx,todayStr());if(sp.kind==='task')taskAdd(sp.title,sp.due);else{state.qnotes.unshift({id:nid(state,'n'),t:sp.title.slice(0,80),b:sp.title.length>80?sp.title:'',pin:false,inb:1,ts:Date.now(),upd:Date.now()});touch('journal');}
+setTimeout(function(){toast(sp.kind==='task'?'Task added from Share':'Saved to Notes from Share');},500);}
+history.replaceState(null,'',location.pathname);}}catch(e){}
+setInterval(function(){try{var e=document.getElementById('rbcard');if(!e||document.hidden)return;var h=document.createElement('div');h.innerHTML=rbToday(todayStr());var nn=h.firstElementChild;if(!nn)return;var o=e.querySelector('details'),no=nn.querySelector('details');if(o&&o.open&&no)no.open=true;e.replaceWith(nn);}catch(x){}},60000);
 render();if(lockDue())showLock();regPeriodic();syncReminder();
 setTimeout(initSync,0);
 })();
