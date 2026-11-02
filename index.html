@@ -467,6 +467,7 @@ html{-webkit-tap-highlight-color:transparent}
 .rbe{display:grid;grid-template-columns:108px 1fr 72px auto;gap:8px;align-items:center;margin-top:8px}
 @media(max-width:520px){.rbe{grid-template-columns:96px 1fr 62px auto}}
 @media(prefers-reduced-motion:reduce){.btn,.sm,.tab{transition:none}.btn:active,.sm:active{transform:none}}
+.coach{margin:8px 0 0;padding-inline-start:18px;display:grid;gap:6px}.coach li{line-height:1.45}
 </style>
 </head>
 <body>
@@ -755,7 +756,9 @@ function sizeNudge(){
 }
 /* ================= day routine: an ordinary day as time blocks, per day type ================= */
 var RB_TYPES=[['M','Morning shift'],['E','Night shift'],['O','Day off']];
-var RB_STARTER=[['06:30','Wake up, water, light',15],['07:00','Breakfast',30],['08:00','Deep work',90],['10:00','Break and a walk',20],['10:30','Study or project',90],['12:30','Lunch',45],['14:00','Training or movement',60],['16:00','Chores and errands',60],['18:00','Family and friends',90],['20:00','Dinner',45],['21:00','Plan tomorrow and wind down',30],['22:30','Sleep',0]];
+var RB_START={M:[['05:30','Wake up, water, daylight',15],['06:00','Breakfast',30],['07:00','Work',480],['15:30','Walk and decompress',30],['16:30','Training or movement',60],['18:00','Dinner',45],['19:00','Family, friends or study',120],['21:00','Plan tomorrow and wind down',45],['22:00','Sleep',0]],
+E:[['08:00','Wake up, water, daylight',15],['08:30','Breakfast',30],['10:00','Training or movement',60],['11:30','Study or project',90],['13:30','Lunch',45],['14:30','Work',480],['22:30','Dinner and decompress',45],['23:30','Wind down and plan tomorrow',45],['00:30','Sleep',0]],
+O:[['07:00','Wake up, water, daylight',15],['07:30','Breakfast',30],['08:30','Deep work or study',90],['10:00','Break and a walk',20],['10:30','Project or chores',90],['12:30','Lunch',45],['14:00','Training or movement',60],['16:00','Errands and chores',60],['18:00','Family and friends',90],['20:00','Dinner',45],['21:30','Plan tomorrow and wind down',45],['23:00','Sleep',0]]};
 function hm2m(x){var p=String(x).split(':');return (+p[0])*60+(+p[1]);}
 function rbType(d){var k=shiftOf(d);return ({M:1,E:1,O:1})[k]?k:'O';}
 function rbList(d){return (state.rb||[]).filter(function(x){return !x.x&&x.d===d;}).sort(function(a,b){return hm2m(a.t)-hm2m(b.t);});}
@@ -779,6 +782,48 @@ function rbPanel(){
    (L.length?L.map(function(x){return '<div class="rbe"><input class="inp" type="time" data-rbt="'+x.id+'" value="'+x.t+'" aria-label="Start time"><input class="inp" data-rbn="'+x.id+'" value="'+esc(x.n)+'" aria-label="Block name"><input class="inp" type="number" min="0" max="600" step="5" data-rbm="'+x.id+'" value="'+(x.m||0)+'" aria-label="Minutes"><button class="rm" data-act="rbdel" data-b="'+x.id+'" aria-label="Remove block">\u00D7</button></div>';}).join(''):'<p class="hint" style="padding:10px 0">No blocks for this day type yet.</p>')+
    '<div class="rbe"><input class="inp" type="time" id="rbT" value="09:00" aria-label="New block start time"><input class="inp" id="rbN" placeholder="New block" aria-label="New block name"><input class="inp" type="number" min="0" max="600" step="5" id="rbM" value="30" aria-label="New block minutes"><button class="btn pri" data-act="rbadd">Add</button></div>'+
    (L.length?'':'<div class="btns" style="margin-top:10px"><button class="btn" data-act="rbstart">Load a starter routine</button>'+RB_TYPES.filter(function(x){return x[0]!==d&&rbList(x[0]).length;}).map(function(x){return '<button class="btn" data-act="rbcopy" data-k="'+x[0]+'">Copy from '+x[1]+'</button>';}).join('')+'</div>')+'</div>';
+}
+
+/* ================= coach: weekly training review, plan audit, routine review ================= */
+var VOL={chest:[6,10,20],shoulders:[6,10,20],back:[6,10,20],legs:[6,10,20],biceps:[4,6,14],triceps:[4,6,14]};
+function coachPanel(){
+  var t=todayStr(),a=addDays(t,-6),n=[],st=programStatus(),tr=trainedDates(a,t),pr=trainedDates(addDays(t,-13),addDays(t,-7)),vol=0,pv=0,rs=0,rn=0;
+  tr.forEach(function(d){var w=state.workouts[d];vol+=sessionVolume(w);(w.x||[]).forEach(function(x){x.s.forEach(function(q){if(q[3]===1&&+q[2]>0){rs+=+q[2];rn++;}});});});
+  pr.forEach(function(d){pv+=sessionVolume(state.workouts[d]);});
+  var goal=(state.targets&&+state.targets.wk)||3,rpe=rn?rs/rn:0;
+  if(!tr.length)n.push('No sessions in the last 7 days. Start with one easy session; consistency beats intensity.');
+  else if(tr.length<goal)n.push(tr.length+' of '+goal+' planned sessions. Keep the missed one short instead of skipping it.');
+  else n.push('You hit your '+goal+' sessions. Consistency is the main driver of results.');
+  if(pv>0&&vol>pv*1.3)n.push('Volume jumped '+Math.round((vol/pv-1)*100)+'% on last week. Rises above 20 to 30% raise fatigue and injury risk; hold steady this week.');
+  if(rpe>=9)n.push('Average RPE is '+rpe.toFixed(1)+'. You train too close to failure. Keep 1 to 2 reps in reserve on most sets.');
+  else if(rpe>0&&rpe<=6.5)n.push('Average RPE is '+rpe.toFixed(1)+'. There is room to add weight or reps.');
+  if(st&&st.isDeload)n.push('Deload week: cut sets by about half and keep RPE at 7 or below.');
+  var stall=[];state.exercises.forEach(function(ex){if(ex.t!=='lift')return;var h=exHistory(ex.id);if(h.length<4)return;var v=h.slice(-4).map(function(x){return metricOf(ex,x.sets);});if(Math.max(v[1],v[2],v[3])<=v[0])stall.push(ex.n);});
+  if(stall.length)n.push('No progress for 3 sessions: '+stall.slice(0,3).join(', ')+'. Try a new rep range, one extra set, or a deload.');
+  var g=groupSets(a,t),chips=Object.keys(VOL).map(function(k){var r=VOL[k],c=g[k]||0;return '<span class="tag">'+GRP[k][1]+' '+c+' \u00B7 '+(c<r[0]?'low':(c<r[1]?'maintain':(c<=r[2]?'growth zone':'high')))+'</span>';}).join(' ');
+  return '<div class="panel" style="margin-top:12px"><h3>Coach review</h3><p class="hint">Last 7 days</p><div class="kpis"><div class="kpi"><b>'+tr.length+'/'+goal+'</b><span>Sessions</span></div><div class="kpi"><b>'+Math.round(vol).toLocaleString('en-US')+'</b><span>Volume (kg)</span></div><div class="kpi"><b>'+(rpe?rpe.toFixed(1):'\u2014')+'</b><span>Avg RPE</span></div></div><ul class="coach">'+n.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul><p class="hint" style="margin-top:10px">Hard sets per muscle. Guide: 10 to 20 a week for growth.</p><div class="btns" style="margin-top:6px">'+chips+'</div></div>';
+}
+function planAudit(){
+  if(!state.plans.length)return '';
+  var g={},big=[],n=[];
+  state.plans.forEach(function(p){var tot=0;p.items.forEach(function(i){var ex=exById(i.e),c=parseInt(i.sets,10)||0;tot+=c;if(ex)g[ex.g]=(g[ex.g]||0)+c;});if(tot>24)big.push(p.n+' ('+tot+' sets)');});
+  var push=(g.chest||0)+(g.shoulders||0)+(g.triceps||0),pull=(g.back||0)+(g.biceps||0);
+  if(!g.legs)n.push('No leg work in your plans. Legs are the largest muscle group; add squats, lunges or hinges.');
+  if(push>0&&pull<push*0.8)n.push('Pulling ('+pull+' sets) is well below pushing ('+push+'). Add rows or pull-downs to protect your shoulders and posture.');
+  Object.keys(VOL).forEach(function(k){var c=g[k]||0;if(c&&c<VOL[k][0])n.push(GRP[k][1]+': only '+c+' planned sets. Add a few if growth is the goal.');if(c>VOL[k][2])n.push(GRP[k][1]+': '+c+' planned sets is high. Watch your recovery.');});
+  if(big.length)n.push('Long sessions: '+big.join(', ')+'. Past about 24 hard sets, quality usually drops.');
+  return '<div class="panel"><h3>Plan audit</h3><p class="hint">Weekly sets if each plan runs once a week. Multiply for plans you repeat.</p><ul class="coach">'+(n.length?n:['Balanced: legs, push and pull are all covered.']).map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul></div>';
+}
+function rbReviewPanel(){
+  var d=ui.rbd||rbType(todayStr()),L=rbList(d);if(!L.length)return '';
+  var n=[],SL=/sleep|نوم/i,tip={M:'Get daylight within an hour of waking and stop caffeine about 8 hours before bed.',E:'Eat your main meal before the shift, keep caffeine out of the last 6 hours, and sleep in a dark, cool room.',O:'Keep your wake time within about an hour of your work days to avoid social jet lag.'}[d];
+  L.forEach(function(x,i){var nx=L[i+1];if(!nx)return;if(x.m&&hm2m(x.t)+x.m>hm2m(nx.t))n.push('"'+x.n+'" overlaps "'+nx.n+'".');if(!SL.test(x.n)&&hm2m(nx.t)-hm2m(x.t)-(x.m||0)>240)n.push('Long unplanned stretch after "'+x.n+'". Add a meal, break or buffer.');});
+  var sl=L.filter(function(x){return SL.test(x.n);})[0],w=L.filter(function(x){return x!==sl;})[0];
+  if(!sl)n.push('No sleep block. Schedule sleep first and build the day around it.');
+  else if(w){var h=((hm2m(w.t)-hm2m(sl.t))+1440)%1440/60;if(h<7)n.push('Sleep window is '+h.toFixed(1)+' h. Aim for 7 to 9.');}
+  if(!L.some(function(x){return /meal|breakfast|lunch|dinner|eat|فطار|غدا|عشا|أكل|اكل/i.test(x.n);}))n.push('No meal blocks. Regular meals anchor your energy and sleep.');
+  if(!L.some(function(x){return /train|gym|walk|workout|exercise|move|تمرين|مشي|رياضة/i.test(x.n);}))n.push('No movement block. Even a 20 minute walk helps.');
+  return '<div class="panel"><details class="hist"><summary>Review this routine</summary><ul class="coach">'+(n.length?n:['Balanced: no overlaps, a protected sleep window, meals and movement.']).concat([tip]).map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul></details></div>';
 }
 
 var SECTIONS=[
@@ -2508,7 +2553,7 @@ function trainProgress(){
   var g7=groupSets(addDays(t,-6),t),g28=groupSets(addDays(t,-27),t);
   var gmax=Math.max.apply(null,GROUPS.map(function(g){return g28[g[0]]||0;}).concat([1]));
   var gbars=barsHTML(GROUPS.map(function(g){var n=g28[g[0]]||0;return {l:g[1],c:g[2],p:n*100/gmax,v:(g7[g[0]]||0)+' / '+n};}));
-  return (state.program.start?'<div class="panel" style="margin-top:12px"><h3>12-week program</h3>'+programBanner()+'</div>':'')+testingPanel()+
+  return coachPanel()+(state.program.start?'<div class="panel" style="margin-top:12px"><h3>12-week program</h3>'+programBanner()+'</div>':'')+testingPanel()+
     '<div class="panel" style="margin-top:12px"><h3>Exercise progress</h3><select class="inp" id="progEx" data-progex="1" aria-label="Exercise">'+groupOptions(sel)+'</select><div style="margin-top:12px">'+chart+prBox+'</div></div>'+
     '<div class="panel"><h3>Workouts per week</h3><div class="chart">'+barChart(wk,wkl,{target:state.targets.wk,aria:'Workouts per week'})+'</div></div>'+
     '<div class="panel"><h3>Weekly volume (kg)</h3><div class="chart">'+barChart(vol,wkl,{color:'var(--c-learning)',aria:'Weekly volume'})+'</div></div>'+
@@ -2559,7 +2604,7 @@ function viewTrain(){
 function trainProgressAll(){return trainProgress()+trainHistory();}
 function trainPlans(){
   if(ui.train.plan)return trainPlansCore();
-  return trainPlansCore()+
+  return trainPlansCore()+planAudit()+
     '<div class="panel"><h3>Exercise library</h3><p class="hint">Rename, regroup, or delete exercises. The last number on each row is the weight step (kg) used for progression suggestions.</p></div>'+
     trainExercises();
 }
@@ -2664,7 +2709,7 @@ function viewPlan(){
     tasksPlanPanel()+expPanel()+'<div class="panel"><h3>Personal rules</h3><div class="today-rule"><div class="hint" style="color:inherit;opacity:.7">Rule of the day</div><div class="en">'+esc(state.rules[doy%state.rules.length]||'')+'</div></div>'+
     state.rules.map(function(x,ri){return '<div class="pli"><div class="pli-top" style="grid-template-columns:1fr auto auto"><input class="inp" data-rule="'+ri+'" value="'+esc(x)+'" aria-label="Rule '+(ri+1)+'"><button class="sm mv" data-act="rulemove" data-i="'+ri+'" aria-label="Move up">\u2191</button><button class="rm" data-act="rulerm" data-i="'+ri+'" aria-label="Remove">\u00D7</button></div></div>';}).join('')+
     '<div class="addf" style="grid-template-columns:1fr auto;margin-top:10px"><input class="inp" id="newRule" placeholder="Add a rule" aria-label="New rule"><button class="btn pri" data-act="ruleadd">Add</button></div></div>'+
-    rbPanel()+'<div class="panel"><h3>Minimum day</h3><p class="hint" style="margin-bottom:8px">On a bad day, do these and the day still counts.</p><div class="minbox" style="--c:var(--c-body)">'+(mn.length?mn.map(function(h){return rowHTML(h,ui.date);}).join(''):'<p class="hint" style="padding:12px 0">Mark habits as minimum day in Settings.</p>')+'</div></div>';
+    rbPanel()+rbReviewPanel()+'<div class="panel"><h3>Minimum day</h3><p class="hint" style="margin-bottom:8px">On a bad day, do these and the day still counts.</p><div class="minbox" style="--c:var(--c-body)">'+(mn.length?mn.map(function(h){return rowHTML(h,ui.date);}).join(''):'<p class="hint" style="padding:12px 0">Mark habits as minimum day in Settings.</p>')+'</div></div>';
 }
 
 /* ================= views: notes ================= */
@@ -3252,7 +3297,7 @@ document.addEventListener('click',function(e){
     case 'rbd':ui.rbd=el.dataset.k;render();break;
     case 'rbadd':{var rt=$('#rbT').value,rn=($('#rbN').value||'').trim(),rm=parseInt($('#rbM').value,10)||0;if(!rn||!/^\d\d:\d\d$/.test(rt)){toast('Add a time and a name');break;}rbAdd(ui.rbd||rbType(todayStr()),rt,rn.slice(0,80),Math.max(0,Math.min(600,rm)));touch('core');focusSel='#rbN';render();break;}
     case 'rbdel':{var rx=(state.rb||[]).find(function(x){return x.id===el.dataset.b;});if(rx){rx.x=1;rx.u=Date.now();touch('core');render();}break;}
-    case 'rbstart':{RB_STARTER.forEach(function(r){rbAdd(ui.rbd||rbType(todayStr()),r[0],r[1],r[2]);});touch('core');toast('Starter routine added. Edit it freely.');render();break;}
+    case 'rbstart':{var rk=ui.rbd||rbType(todayStr());RB_START[rk].forEach(function(r){rbAdd(rk,r[0],r[1],r[2]);});touch('core');toast('Starter routine added. Edit it freely.');render();break;}
     case 'rbcopy':{rbList(el.dataset.k).forEach(function(x){rbAdd(ui.rbd||rbType(todayStr()),x.t,x.n,x.m);});touch('core');render();break;}
     case 'tpost':{var tp=(state.tasks||[]).find(function(x){return x.id===el.dataset.t;});if(tp){tp.due=addDays(todayStr(),1);tp.u=Date.now();touch('core');toast('Moved to tomorrow');render();}break;}
     case 'tcal':icsTask(el.dataset.t);break;
