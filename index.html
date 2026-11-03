@@ -468,6 +468,18 @@ html{-webkit-tap-highlight-color:transparent}
 @media(max-width:520px){.rbe{grid-template-columns:96px 1fr 62px auto}}
 @media(prefers-reduced-motion:reduce){.btn,.sm,.tab{transition:none}.btn:active,.sm:active{transform:none}}
 .coach{margin:8px 0 0;padding-inline-start:18px;display:grid;gap:6px}.coach li{line-height:1.45}
+
+/* UI polish */
+.panel{box-shadow:0 1px 2px rgba(17,23,40,.05),0 6px 18px rgba(17,23,40,.05)}
+:root[data-theme="dark"] .panel{box-shadow:none}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .panel{box-shadow:none}}
+h3{font-family:var(--f-display);letter-spacing:-.01em}
+.inp:focus-visible,.btn:focus-visible,.sm:focus-visible,.toggle:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.toggle{transition:background-color .15s,border-color .15s,color .15s}
+@media (hover:hover){.btn:hover,.sm:hover,.toggle:hover{border-color:var(--line2)}}
+.rbbar{height:6px;border-radius:999px;background:var(--surface2);overflow:hidden;margin:6px 0 4px}.rbbar i{display:block;height:100%;background:var(--accent);border-radius:inherit;transition:width .4s ease}
+.rbr.now b{color:var(--accent)}
+html{scrollbar-gutter:stable}
 </style>
 </head>
 <body>
@@ -755,7 +767,7 @@ function sizeNudge(){
   return sizeC.h;
 }
 /* ================= day routine: an ordinary day as time blocks, per day type ================= */
-var RB_TYPES=[['M','Morning shift'],['E','Night shift'],['O','Day off']];
+var RB_TYPES=[['O','Daily routine']];
 var RB_START={M:[['05:30','Wake up, water, daylight',15],['06:00','Breakfast',30],['07:00','Work',480],['15:30','Walk and decompress',30],['16:30','Training or movement',60],['18:00','Dinner',45],['19:00','Family, friends or study',120],['21:00','Plan tomorrow and wind down',45],['22:00','Sleep',0]],
 E:[['08:00','Wake up, water, daylight',15],['08:30','Breakfast',30],['10:00','Training or movement',60],['11:30','Study or project',90],['13:30','Lunch',45],['14:30','Work',480],['22:30','Dinner and decompress',45],['23:30','Wind down and plan tomorrow',45],['00:30','Sleep',0]],
 O:[['07:00','Wake up, water, daylight',15],['07:30','Breakfast',30],['08:30','Deep work or study',90],['10:00','Break and a walk',20],['10:30','Project or chores',90],['12:30','Lunch',45],['14:00','Training or movement',60],['16:00','Errands and chores',60],['18:00','Family and friends',90],['20:00','Dinner',45],['21:30','Plan tomorrow and wind down',45],['23:00','Sleep',0]]};
@@ -771,14 +783,14 @@ function rbToday(d){
   L.forEach(function(x,i){if(hm2m(x.t)<=cur)idx=i;});
   var now=idx>=0?L[idx]:null,live=!!now&&(!now.m||cur<hm2m(now.t)+now.m),nx=L[idx+1];
   var type=RB_TYPES.filter(function(x){return x[0]===sh;})[0][1];
-  return '<div class="panel rbcard" id="rbcard"><h3>Routine <span class="hint">'+esc(type)+'</span></h3>'+
+  return '<div class="panel rbcard" id="rbcard"><h3>Routine</h3><div class="rbbar"><i style="width:'+Math.round((idx+1)/L.length*100)+'%"></i></div>'+
     (live?'<p class="hint rbl">Now</p>'+rbRow(now,'now'):'')+
     (nx?'<p class="hint rbl">Next</p>'+rbRow(nx,''):(live?'':'<p class="hint">The routine for today is finished.</p>'))+
     '<details class="rbfull"><summary>Full day ('+L.length+' blocks)</summary>'+L.map(function(x,i){return rbRow(x,(i<idx||(i===idx&&!live))?'past':(i===idx?'now':''));}).join('')+'</details></div>';
 }
 function rbPanel(){
   var d=ui.rbd||rbType(todayStr()),L=rbList(d);
-  return '<div class="panel"><h3>Day routine</h3><p class="hint" style="margin-bottom:8px">Your ordinary day as time blocks, one list per day type. Today shows what is now and what is next. Edit anything.</p>'+segHTML(RB_TYPES,d,'rbd')+
+  return '<div class="panel"><h3>Day routine</h3><p class="hint" style="margin-bottom:8px">Your ordinary day as time blocks, one list per day type. Today shows what is now and what is next. Edit anything.</p>'+
    (L.length?L.map(function(x){return '<div class="rbe"><input class="inp" type="time" data-rbt="'+x.id+'" value="'+x.t+'" aria-label="Start time"><input class="inp" data-rbn="'+x.id+'" value="'+esc(x.n)+'" aria-label="Block name"><input class="inp" type="number" min="0" max="600" step="5" data-rbm="'+x.id+'" value="'+(x.m||0)+'" aria-label="Minutes"><button class="rm" data-act="rbdel" data-b="'+x.id+'" aria-label="Remove block">\u00D7</button></div>';}).join(''):'<p class="hint" style="padding:10px 0">No blocks for this day type yet.</p>')+
    '<div class="rbe"><input class="inp" type="time" id="rbT" value="09:00" aria-label="New block start time"><input class="inp" id="rbN" placeholder="New block" aria-label="New block name"><input class="inp" type="number" min="0" max="600" step="5" id="rbM" value="30" aria-label="New block minutes"><button class="btn pri" data-act="rbadd">Add</button></div>'+
    (L.length?'':'<div class="btns" style="margin-top:10px"><button class="btn" data-act="rbstart">Load a starter routine</button>'+RB_TYPES.filter(function(x){return x[0]!==d&&rbList(x[0]).length;}).map(function(x){return '<button class="btn" data-act="rbcopy" data-k="'+x[0]+'">Copy from '+x[1]+'</button>';}).join('')+'</div>')+'</div>';
@@ -816,7 +828,7 @@ function planAudit(){
 }
 function rbReviewPanel(){
   var d=ui.rbd||rbType(todayStr()),L=rbList(d);if(!L.length)return '';
-  var n=[],SL=/sleep|نوم/i,tip={M:'Get daylight within an hour of waking and stop caffeine about 8 hours before bed.',E:'Eat your main meal before the shift, keep caffeine out of the last 6 hours, and sleep in a dark, cool room.',O:'Keep your wake time within about an hour of your work days to avoid social jet lag.'}[d];
+  var n=[],SL=/sleep|نوم/i,tip='Keep your wake time within about an hour every day, weekends included, and get daylight early.';
   L.forEach(function(x,i){var nx=L[i+1];if(!nx)return;if(x.m&&hm2m(x.t)+x.m>hm2m(nx.t))n.push('"'+x.n+'" overlaps "'+nx.n+'".');if(!SL.test(x.n)&&hm2m(nx.t)-hm2m(x.t)-(x.m||0)>240)n.push('Long unplanned stretch after "'+x.n+'". Add a meal, break or buffer.');});
   var sl=L.filter(function(x){return SL.test(x.n);})[0],w=L.filter(function(x){return x!==sl;})[0];
   if(!sl)n.push('No sleep block. Schedule sleep first and build the day around it.');
@@ -827,7 +839,7 @@ function rbReviewPanel(){
 }
 
 var SECTIONS=[
- {id:'morning',name:'Before Shift',c:'--c-morning'},
+ {id:'morning',name:'Morning',c:'--c-morning'},
  {id:'hygiene',name:'Personal Care',c:'--c-hygiene'},
  {id:'work',name:'Work',c:'--c-work'},
  {id:'learning',name:'Learning',c:'--c-learning'},
@@ -835,7 +847,7 @@ var SECTIONS=[
  {id:'body',name:'Body & Health',c:'--c-body'},
  {id:'spiritual',name:'Spiritual',c:'--c-spiritual'},
  {id:'relationships',name:'Relationships',c:'--c-relationships'},
- {id:'evening',name:'After Shift',c:'--c-evening'}
+ {id:'evening',name:'Evening',c:'--c-evening'}
 ];
 var SEC={};SECTIONS.forEach(function(s){SEC[s.id]=s;});
 
@@ -1233,7 +1245,7 @@ if(window.matchMedia){
 var CYCLE=['M','M','M','M','O','O','E','E','E','E','O','O'];
 function cycleIdx(d){var c=state.settings&&state.settings.cycle;if(!c)return -1;var n=Math.round((parseD(d)-parseD(c))/86400000);return n<0?-1:n%12;}
 function autoShift(d){var i=cycleIdx(d);return i<0?'':CYCLE[i];}
-function shiftOf(d){return (state.shifts&&state.shifts[d])||autoShift(d);}
+function shiftOf(){return '';}
 function sleepCardHTML(d){
   var i=cycleIdx(d);if(i<0)return '';
   var t=CYCLE[i],prev=CYCLE[(i+11)%12],next=CYCLE[(i+1)%12],ttl,msg;
@@ -1528,10 +1540,10 @@ function syncReminder(){try{var g=state.settings,t=todayStr(),days={};for(var i=
 function regPeriodic(){try{if(!state.settings.notify||!navigator.serviceWorker)return;navigator.serviceWorker.ready.then(function(reg){if(reg.periodicSync)reg.periodicSync.register('lifeos-daily-check',{minInterval:3600000}).catch(function(){});}).catch(function(){});}catch(e){}}
 function remindPanel(){
   var g=state.settings;
-  return '<div class="panel"><h3>Daily reminder</h3><p class="hint">If you have not checked off the minimum day by the time below, you get a notification. The time depends on that day\'s shift. It only works in an installed app on Chrome for Android, and only after you allow notifications.</p>'+
+  return '<div class="panel"><h3>Daily reminder</h3><p class="hint">If you have not checked off the minimum day by the time below, you get a notification. It only works in an installed app on Chrome for Android, and only after you allow notifications.</p>'+
     '<div class="btns"><button class="toggle" data-act="'+'tnotify'+'" aria-pressed="'+g.notify+'">Notifications</button></div>'+
-    '<p class="hint" style="margin-top:10px">Works on any phone, even with the app closed: add the next 30 days of reminders to your calendar. They follow your shifts and skip paused days. Export again about once a month.</p><div class="btns"><button class="btn sm2 pri" data-act="icsdaily">Export 30 days of reminders (.ics)</button></div>'+
-    '<div class="grid2"><label class="lbl"><span>Morning shift or day off</span><input class="inp" type="time" data-rem="M" value="'+esc(g.remM)+'"></label><label class="lbl"><span>Night shift</span><input class="inp" type="time" data-rem="E" value="'+esc(g.remE)+'"></label></div></div>';
+    '<p class="hint" style="margin-top:10px">Works on any phone, even with the app closed: add the next 30 days of reminders to your calendar. They skip paused days. Export again about once a month.</p><div class="btns"><button class="btn sm2 pri" data-act="icsdaily">Export 30 days of reminders (.ics)</button></div>'+
+    '<div class="grid2"><label class="lbl"><span>Reminder time</span><input class="inp" type="time" data-rem="M" value="'+esc(g.remM)+'"></label></div></div>';
 }
 function schedulePush(){if(!sync.refs)return;clearTimeout(pushT);pushT=setTimeout(pushRemote,1200);}
 function pick(part){var o={};DOCS[part].forEach(function(k){o[k]=state[k];});return o;}
@@ -2065,7 +2077,7 @@ function weekdayBars(){
   return '<div class="panel"><h3>Average by weekday</h3><p class="hint" style="margin-bottom:8px">Last 12 weeks. It shows which days your system holds up and which need a plan.</p>'+barsHTML(items)+'</div>';
 }
 function dayTypeBars(){
-  var c=state.settings.cycle;if(!c)return weekdayBars();
+  return weekdayBars();
   var t=todayStr(),sum={M:0,E:0,O:0},cnt={M:0,E:0,O:0},started=false,i;
   for(i=83;i>=0;i--){
     var d=addDays(t,-i),st=dayStats(d);
@@ -2253,7 +2265,7 @@ function stratHTML(d){
   return out?'<div class="strat">'+out+'</div>':'';
 }
 /* ---- experiments: one at a time, judged from data the app already has ---- */
-var EXP_M={sleep:'average sleep hours',mood:'average mood',focus:'focus minutes per day',done:'daily completion',train:'workouts per week'};
+var EXP_M={sleep:'average sleep hours',focus:'focus minutes per day',done:'daily completion',train:'workouts per week'};
 function activeExp(){return (state.experiments||[]).find(function(e){return !e.done;})||null;}
 function expAvg(m,a,b){
   var t=todayStr(),end=b<t?b:t,d=a,vals=[],g=0,days=0;
@@ -2312,11 +2324,8 @@ function heroHTML(d){
     '<button class="nx-do" data-act="toggle" data-h="'+nx.id+'" aria-label="Mark '+esc(nx.n)+' done">'+CHECK+'</button></div>';
 }
 function dayCtl(d){
-  var sh=shiftOf(d),mo=state.mood[d]||0;
-  function chip(a,v,l,on){return '<button class="toggle'+(on?' ok':'')+'" data-act="'+a+'" data-v="'+v+'" aria-pressed="'+on+'">'+l+'</button>';}
-  return '<div class="toolbar">'+[['M','Morning shift'],['E','Night shift'],['O','Day off']].map(function(x){return chip('shift',x[0],x[1],sh===x[0]);}).join('')+
-    (sh?'<button class="btn sm2" data-act="shiftwk">Copy to week</button>':'')+chip('offday','',isOff(d)?'Paused (sick/leave)':'Pause day',isOff(d))+'</div>'+
-    '<div class="toolbar"><span class="hint">Mood</span>'+[1,2,3,4,5].map(function(n){return chip('mood',n,n,mo===n);}).join('')+'</div>';
+  var o=isOff(d);
+  return '<div class="toolbar"><button class="toggle'+(o?' ok':'')+'" data-act="offday" data-v="" aria-pressed="'+o+'">'+(o?'Paused (sick/leave)':'Pause day')+'</button></div>';
 }
 function viewToday(){
   var d=ui.date,t=todayStr(),isT=d===t,notes=state.notes[d]||{};
@@ -2862,8 +2871,6 @@ function insights(mo,wk,pfW){
   if(state.targets.wk)out.push('You trained <b>'+tw+'</b> time'+(tw===1?'':'s')+' in the last 7 days (target '+state.targets.wk+').');
   var sl=[];for(var i=0;i<7;i++){var b=bodyOf(addDays(t,-i));if(b.sl>0)sl.push(b.sl);}
   if(sl.length>=3){var as=avg(sl);out.push('Average sleep over the last '+sl.length+' logged days: <b>'+fmt(as)+' h</b>'+(as<state.targets.sleep?', below your '+fmt(state.targets.sleep)+' h target. Sleep comes before extra productivity.':', on target.'));}
-  var mv=[];for(var mi=0;mi<14;mi++){var mm=state.mood[addDays(t,-mi)];if(mm)mv.push(mm);}
-  if(mv.length>=3)out.push('Average mood over the last '+mv.length+' logged days: <b>'+fmt(avg(mv))+' / 5</b>.');
   if(pfW.focus)out.push('Focus time in the last 7 days: <b>'+pfW.focus+' min</b>.');
   var st=streaks();if(st.cur>0)out.push('Minimum-day streak: <b>'+st.cur+'</b> day'+(st.cur===1?'':'s')+'. Never let one bad day become a bad week.');
   var bn=bottleneck();if(bn)out.push('Weakest block last week: <b>'+esc(bn.h.n)+'</b> ('+bn.pct+'%).');
@@ -2928,7 +2935,7 @@ function setHabits(){
         return '<div class="hm'+(h.on?'':' off')+'"><input class="inp" data-hn="'+h.id+'" value="'+esc(h.n)+'" aria-label="Habit name">'+
           '<div class="hact"><select class="inp sel" data-hs="'+h.id+'" aria-label="Section for '+esc(h.n)+'">'+SECTIONS.map(function(x){return '<option value="'+x.id+'"'+(x.id===h.s?' selected':'')+'>'+esc(x.name)+'</option>';}).join('')+'</select>'+
           '<select class="inp sel" data-hf="'+h.id+'" aria-label="Frequency for '+esc(h.n)+'">'+FREQS.map(function(x){return '<option value="'+x[0]+'"'+(x[0]===fr?' selected':'')+'>'+x[1]+'</option>';}).join('')+'</select>'+
-          (fr==='daily'?'<select class="inp sel" data-hsh="'+h.id+'" aria-label="Shift for '+esc(h.n)+'"><option value="">Any shift</option><option value="M"'+(h.sh==='M'?' selected':'')+'>Morning shift only</option><option value="E"'+(h.sh==='E'?' selected':'')+'>Night shift only</option></select><input class="inp sel" type="number" min="0" style="width:96px" data-htg="'+h.id+'" value="'+(h.tg||'')+'" placeholder="Count target" aria-label="Count target for '+esc(h.n)+'">':'')+
+          (fr==='daily'?'<input class="inp sel" type="number" min="0" style="width:96px" data-htg="'+h.id+'" value="'+(h.tg||'')+'" placeholder="Count target" aria-label="Count target for '+esc(h.n)+'">':'')+
           (fr==='daily'?'<button class="sm" data-act="hmin" data-h="'+h.id+'" aria-pressed="'+h.min+'" title="Part of the minimum day">Minimum day</button><button class="sm" data-act="hnd" data-h="'+h.id+'" aria-pressed="'+!!h.nd+'" title="Not counted in the daily percentage">As needed</button>':'')+
           '<button class="sm" data-act="hmove" data-h="'+h.id+'" aria-label="Move up">\u2191</button>'+
           '<button class="sm" data-act="hdown" data-h="'+h.id+'" aria-label="Move down">\u2193</button>'+
@@ -3467,8 +3474,6 @@ var QC_TABS=[['Today','today'],['Train','train'],['Focus','focus'],['Overview','
 function qcCmds(){
   var c=QC_TABS.filter(function(t){return VIEWS[t[1]];}).map(function(t){return {l:'Go to '+t[0],f:function(){ui.tab=t[1];render();}};});
   c.push({l:'Set prayer location (latitude, longitude)',f:function(){var v=prompt('Latitude, longitude (for example 30.04, 31.24)',(state.settings.loc||[]).join(', '));if(v===null)return;var p=v.split(',').map(parseFloat);if(p.length===2&&isFinite(p[0])&&isFinite(p[1])&&Math.abs(p[0])<=66&&Math.abs(p[1])<=180){state.settings.loc=p;touch('core');toast('Location saved');render();}else toast('Could not read that location');}});
-  c.push({l:'Set shift cycle start (first morning day of a 4-day block)',f:function(){var v=prompt('Date of the first day of a 4-morning block (YYYY-MM-DD)',state.settings.cycle||todayStr());if(v===null)return;v=v.trim();if(/^\d{4}-\d\d-\d\d$/.test(v)&&!isNaN(parseD(v))){state.settings.cycle=v;touch('core');toast('Shift cycle saved');render();}else toast('Use the format YYYY-MM-DD');}});
-  c.push({l:'Clear shift cycle',f:function(){state.settings.cycle='';touch('core');toast('Shift cycle cleared');render();}});
   c.push({l:'Set PIN auto-lock delay (minutes)',f:function(){var v=parseInt(prompt('Ask for the PIN again after this many minutes away (0 = every time, now '+lockGrace()+')',lockGrace()),10);if(v>=0&&v<=1440){try{localStorage.setItem('lifeos.lockgrace',String(v));}catch(e){}toast('PIN will be asked after '+v+' min away');}}});
   c.push({l:'Check for a new version now',f:function(){checkUpdate(true);toast('Checking for a new version');}});
   c.push({l:'Show prayer times',f:function(){var t=prayerNow();toast(t?'Fajr '+hm(t.fajr)+'  Sunrise '+hm(t.sunrise)+'  Dhuhr '+hm(t.dhuhr)+'  Asr '+hm(t.asr)+'  Maghrib '+hm(t.maghrib)+'  Isha '+hm(t.isha):'Set your prayer location first');}});
